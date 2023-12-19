@@ -16,6 +16,7 @@ template <class T> class Nodo {
 private:
     T dato;
     Nodo* next;
+
 public:
     Nodo(void) { next = NULL; };
     Nodo(T a) { dato = a; next = NULL; };
@@ -33,11 +34,11 @@ public:
     Lista(void) { czo = new Nodo<T>(); };
     Lista(Nodo<T>* n) { czo = n; };
     ~Lista(void){};
-    void add(T d); //sumar nodos a la lista
+    void add(T d); 
     bool esVacia(void);
-    T cabeza(void); //retorna el dato del primer nodo
+    T cabeza(void); 
     T* getCabeza(void);
-    Lista* resto(void); //retorna el puntero al "resto" de la lista
+    Lista* resto(void); 
     int size(void);
     void borrar(void); //borra la cabeza
 };
@@ -112,7 +113,7 @@ public:
 
 class Paquete{
 private:
-    int routerFinal;
+    int routerFinal, routerActual, routerOrigen;
     int maqFinal;
     Lista<int> camino;
     int numOrden;
@@ -121,9 +122,11 @@ private:
     bitset<16> IPdestino;
     bool terminal;
     int sigRout;
+    int numOrdenCola;
+
 public:
     Paquete(void){};
-    Paquete(int routFnal, int maqFnal,int numeroOrden, int numeroTotalPaquetes,bitset<16> IPorigen,bitset<16> IPdest);
+    Paquete(int routFnal, int maqFnal,int routerActual, int numeroOrden, int numeroTotalPaquetes,bitset<16> IPorigen,bitset<16> IPdest);
     ~Paquete(void){};
 
     int getRouterFinal(void){return routerFinal;};
@@ -131,23 +134,32 @@ public:
     int getSigRouter(void);
     int getCantiTotalPaq(){return numTotalPaquetes;};
     Lista<int> getCamino(void){return camino;};
+    int getRoutActual(void){return routerActual;};
+    int getOrdenCla(void){return numOrdenCola;};
+    int getRouterOrigen(void){return routerOrigen;};
+    bitset <16> getIPorigen(void){return IPorigen;};
 
-    void setCamino(Lista<int> nuevoCamino);
+    void setNuevoCamino(Lista<int> nuevoCamino);
     void setTerminal(void);
+    void setRoutActual(int routAct);
+    void setOrdenCola(int nuevoNum);
 
-    void borrarElemCamino();
+    void borrarElemCamino(void);
 
 };
 
-Paquete::Paquete(int routFnal, int maqFnal,int numeroOrden, int numeroTotalPaquetes,bitset<16> IPorig, bitset<16> IPdest)
+Paquete::Paquete(int routFnal, int maqFnal,int routActual,int numeroOrden, int numeroTotalPaquetes,bitset<16> IPorig, bitset<16> IPdest)
 {
     routerFinal = routFnal;
+    routerOrigen = routActual;
     maqFinal = maqFnal;
+    routerActual = routActual;
     numOrden = numeroOrden;
     numTotalPaquetes = numeroTotalPaquetes;
     IPorigen = IPorig;
     IPdestino = IPdest;
     terminal = false;
+    numOrdenCola = 0;
 }
 
 int Paquete::getSigRouter()
@@ -156,8 +168,8 @@ int Paquete::getSigRouter()
     return sigRout;
 }
 
-void Paquete::setCamino(Lista<int> nuevoCamino)
-{
+void Paquete::setNuevoCamino(Lista<int> nuevoCamino)
+{   
     camino = nuevoCamino;
 }
 
@@ -165,6 +177,15 @@ void Paquete::setTerminal(){
     terminal = true;
 }
 
+void Paquete::setRoutActual(int routAct)
+{
+    routerActual = routAct;
+}
+
+void Paquete::setOrdenCola(int nuevoNum)
+{
+    numOrdenCola = nuevoNum;
+}
 void Paquete::borrarElemCamino()
 {
     camino.borrar();
@@ -177,11 +198,13 @@ private:
     int tamanioPagina;
     int maqFinal;
     int routerFinal;
+    int routOrigen;
     bitset<16> IPorigen;
     bitset<16> IPdestino;
+
 public:
     Pagina(void){};
-    Pagina(int maquinaFinal, int routFinal, bitset<16> direcOrigen, int tamanio);
+    Pagina(int maquinaFinal, int routFinal,int routerOrigen, bitset<16> direcOrigen, int tamanio);
     ~Pagina(void){};
 
     int getTamanoPagina(void){return tamanioPagina;};
@@ -189,14 +212,16 @@ public:
     bitset<16> getIPdestino(void){return IPdestino;};
     int getNumMaqFinal(void){return maqFinal;};
     int getRoutFinal(void){return routerFinal;}
+    int getRoutOrigen(){return routOrigen;};
 
     void setIPdestino(int maq, int rout);
 };
 
-Pagina::Pagina(int maquinaFinal, int routFinal, bitset<16> direcOrigen, int tamanio)
+Pagina::Pagina(int maquinaFinal, int routFinal,int routerOrigen, bitset<16> direcOrigen, int tamanio)
 {   
     maqFinal = maquinaFinal;
     routerFinal = routFinal;
+    routOrigen = routerOrigen;
     IPorigen = direcOrigen;
     tamanioPagina = tamanio;
     setIPdestino(maqFinal,routerFinal);
@@ -217,10 +242,11 @@ template <class T> class Maquina{
 private:
     int numMaquina;
     int numRouter;
-    T routerAsociado;
+    T* routerAsociado;
     bitset <16> direcMaquina;
     Pagina paginaEnviar;
     Pagina paginaRecibida;
+
 public:
     Maquina(void){};
     Maquina(int maq, int rout);
@@ -229,17 +255,17 @@ public:
     int getMaquina(void){return numMaquina;};
     int getRouter(void){return numRouter;};
     bitset <16> getDirec(void){return direcMaquina;};
-    T getRouterAsociado(){return routerAsociado;};
+    T* getRouterAsociado(){return routerAsociado;};
 
     void setDirecMaquina(int maq, int rout);
-    void setPaginaEnviar(Pagina pag);
-    void setPaginaRecibida(Pagina p);
-    void setRouterAsociado(T router);
+    void setPaginaRecibida(Lista<Paquete> paquetes);
+    void setRouterAsociado(T* router);
 
     Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout);
     int generarTamanioAleatorio(void);
     int generarDirecciondeEnvio(Lista<T>* rout,int cantidadRout);
     int generarMaquina(int randRout,Lista<T> *rout);
+
 };
 
 template<class T> Maquina<T>::Maquina(int maq, int rout)
@@ -258,17 +284,14 @@ template<class T> void Maquina<T>::setDirecMaquina(int maq, int rout)
     direcMaquina = (a&b);
 }
 
-template<class T> void Maquina<T>::setPaginaEnviar(Pagina pag)
+template<class T> void Maquina<T>::setPaginaRecibida(Lista<Paquete> paquetes)
 {   
-    paginaEnviar = pag;
-}
-
-template<class T> void Maquina<T>::setPaginaRecibida(Pagina pag)
-{   
+    Paquete paq = paquetes.cabeza();
+    Pagina* pag = new Pagina(numMaquina, numRouter,paq.getRouterOrigen(), paq.getIPorigen(), paq.getCantiTotalPaq());
     paginaRecibida = pag;
 }
 
-template<class T> void Maquina<T>::setRouterAsociado(T router)
+template<class T> void Maquina<T>::setRouterAsociado(T* router)
 {
     routerAsociado = router;
 }
@@ -277,9 +300,9 @@ template <class T> Pagina* Maquina<T>::generarPaginaAleatoria(Lista<T>* rout,int
 {   
     int tamanioPag = generarTamanioAleatorio();
     int numMaqFinal, numRoutFinal = generarDirecciondeEnvio(rout, cantidadRout);
-    Pagina* nueva = new Pagina(numMaqFinal, numRoutFinal, direcMaquina, tamanioPag);
+    int routOrigen = numRouter;
+    Pagina* nueva = new Pagina(numMaqFinal, numRoutFinal,routOrigen, direcMaquina, tamanioPag);
     Pagina pag = *nueva;
-    setPaginaEnviar(pag);
     return nueva;
 }
 
@@ -314,10 +337,11 @@ private:
     int cantidadMaquinas;
     int cantidadVecinos;
     int anchoBanda;
+    int cantidadListTermi;
     Lista<Maquina<Router>> maqAsociadas;
     Lista<Router> routVecinos;
     Lista<Cola<Paquete>> colasVecinos;
-    Lista<Paquete> listaTerminal; 
+    Lista<Lista<Paquete>> listasTerminales; 
     Lista<int> veciNum; //Lista de enteros con los numeros ID de los routers vecinos
 
 public:
@@ -336,16 +360,17 @@ public:
     int generarAnchoBanda();
     void agregarVecino(Router vecino);
     void recibirPagina(Pagina pag);
-    Paquete generarPaquete(int routerFinal, int maqFinal, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino);
+    Paquete generarPaquete(int routerFinal, int maqFinal,int routActual, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino);
     void encolarPaquete(Paquete paq);
     void recibirPaquete(Paquete paq);
-    void recibirPaqueteFinal(Paquete paq);
+    void recibirPaqueteTerminal(Paquete paq);
     void recibirPaqueteVecino(Paquete paq);
-    void ordenarPaqueteFinal(Lista<Paquete> paquetes);
+    void ordenarPaqueteTerminal(Lista<Paquete> paquetes);
     void enviarPaquetes();
-    void enviarPaqueteVecino();
-    void enviarPaqueteFinal();
+    void enviarPaqueteVecino(Lista<Paquete> paquetes);
+    void enviarPaqueteTerminal(Lista<Paquete> paquetes);
     void borrarPaquete(Paquete paq);
+    int turno(void);
 };
 
 Router::Router()
@@ -354,6 +379,7 @@ Router::Router()
     IDRout = -1;
     cantidadMaquinas = 0;
     cantidadVecinos = 0;
+    cantidadListTermi = 0;
     anchoBanda = generarAnchoBanda();
 }
 
@@ -380,6 +406,7 @@ void Router::recibirPagina(Pagina pag)
     int numTotalPaquetes = pag.getTamanoPagina();
     int routerFinal = pag.getRoutFinal();
     int maqFinal = pag.getNumMaqFinal();
+    int routActual = pag.getRoutOrigen();
     bitset<16> IPorigen = pag.getIPorigen();
     bitset<16> IPdestino = pag.getIPdestino();
     int numOrden = 0;
@@ -387,7 +414,7 @@ void Router::recibirPagina(Pagina pag)
     for(int i = 0; i<numTotalPaquetes; i++){
         
         //Generar paquetes
-        Paquete paquete = generarPaquete(routerFinal, maqFinal, numOrden, numTotalPaquetes, IPorigen, IPdestino);
+        Paquete paquete = generarPaquete(routerFinal, maqFinal,routActual, numOrden, numTotalPaquetes, IPorigen, IPdestino);
         
         //Setear camino del paquete
         
@@ -397,14 +424,15 @@ void Router::recibirPagina(Pagina pag)
     }
 }
 
-Paquete Router::generarPaquete(int routerFinal, int maqFinal, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino)
+Paquete Router::generarPaquete(int routerFinal, int maqFinal,int routActual, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino)
 {   
-    Paquete* paquete = new Paquete(routerFinal, maqFinal, numOrden,numTot,IPorigen, IPdestino);
+    Paquete* paquete = new Paquete(routerFinal, maqFinal, routActual, numOrden,numTot,IPorigen, IPdestino);
     return *paquete;
 }
 
 void Router::encolarPaquete(Paquete paq) //Recorrer la lista de colas hasta encontrar el router que corresponde
 {   
+    //Set orden de cola
     int sigRout = paq.getSigRouter();
     Lista<Cola<Paquete>> aux = colasVecinos;
 
@@ -420,53 +448,82 @@ void Router::encolarPaquete(Paquete paq) //Recorrer la lista de colas hasta enco
 
 void Router::recibirPaquete(Paquete paq)
 {
-    //final o vecino
-    //Borrar elemento de lista de camino
+    paq.setRoutActual(IDRout);
+    paq.borrarElemCamino();
+
+    //Determino si el paquete es terminal o vecino
+    if(paq.getCamino().size()==0){
+        recibirPaqueteTerminal(paq);
+    }
+    else{
+        recibirPaqueteVecino(paq);
+    }
 }
 
-void Router::recibirPaqueteFinal(Paquete paq)
+void Router::recibirPaqueteTerminal(Paquete paq)
 {
-    //Aniado el paquete a la Lista Terminal
+    //Aniado el paquete a la Lista Terminal correspondiente
+    Lista<Lista<Paquete>> listTerminalesAux = listasTerminales;
+    Lista<Paquete>* lisAux;
+    int numMaq;
+    //if(paq.getMaquinaFinal())
+    for(int i = 0; i < ; i++){
+        numMaq = 
+        if(paq.getMaquinaFinal()==numMaq)
+    }
     listaTerminal.add(paq);
     int tamanioPag = paq.getCantiTotalPaq();
     int tamanioActual = listaTerminal.size();
 
-    //Comproebo si llegaron todos los paquetes
+    //Compruebo si llegaron todos los paquetes
     //En caso de que si, los ordeno
-    if(tamanioPag == tamanioActual) ordenarPaqueteFinal(listaTerminal);
+    if(tamanioPag == tamanioActual) ordenarPaqueteTerminal(listaTerminal);
 }
 
 void Router::recibirPaqueteVecino(Paquete paq)
 {
-    paq.borrarElemCamino();
+    //Setear paq.setOrdenCola;
 }
 
-void Router::ordenarPaqueteFinal(Lista<Paquete> paquetes)
+void Router::ordenarPaqueteTerminal(Lista<Paquete> paquetes)
 {
     //Ordenar la listaTerminal cuando este completa
-    // enviarPaqueteFinal();
+    // enviarPaqueteTerminal(paquetes);
 }
 
-void Router::enviarPaquetes()
-{   
-
-}
-
-void Router::enviarPaqueteVecino()
+void Router::enviarPaqueteVecino(Lista<Paquete> paquetes)
 {
-    //Enviar y borrar despues
-    //borrarPaquete()
-    
+    //Recorrer lista de Maquinas asociadas hasta encontrar la correspondiente
+    Lista<Maquina<Router>> maqsAux= maqAsociadas;
+    int numMaqFNal = paquetes.cabeza().getMaquinaFinal();
+    int maq;
+    for(int i = 0; i < cantidadMaquinas; i++){
+        maq = maqsAux.cabeza().getMaquina();
+        //Una vez hallada, se envia la lista de paquetes previamente ordenados
+        if(maq==numMaqFNal){
+            maqsAux.getCabeza()->setPaginaRecibida(paquetes);
+            break;
+        }
+        maqsAux = *maqsAux.resto();
+    }
 }
 
-void Router::enviarPaqueteFinal()
+void Router::enviarPaqueteTerminal(Lista<Paquete> paquetes)
 {
     //Enviar paquete a la maquina final
+    Maquina<Router>* maq;
+    //borrarPaquete()
+
 }
 
 void Router::borrarPaquete(Paquete paq)
 {
     //Borrar de la cola correspondiente
+}
+
+int Router::turno()
+{
+    //Cuanto le falta al paquete para que sea el turno de su cola para enviarse
 }
 
 //----------------------------------------------Admin de Sistema---------------------------------------------
@@ -523,23 +580,28 @@ void camino(int P[], int s, int t)
    } 
 }
 
-Router* buscar(int numRout, Lista<Router> routers){
+//----------------------------------Metodos extra-----------------------------------------------
+
+Router* buscar(int numRout, Lista<Router> routers)
+{
     Router* buscado; 
     for(int i = 0; i < routers.size(); i++){
         if(numRout == routers.cabeza().getIDRouter()){
-            buscado = routers.getCabeza();
+            buscado = &routers.cabeza();
         }
         else buscar(numRout, *routers.resto());
     }
     return buscado;
 }
 
+void enviarPagina(Pagina pag, Router* routAsociado)
+{
+    routAsociado->recibirPagina(pag);
+}
+
 //----------------------------------------------- Main-----------------------------------------------------
 
 int main(){
-    int posible = 0;
-    int division = 4; //Cantidad por cada division 
-    int anchoBanda = 5;
     Lista<Router> rout;
     Lista<Maquina<Router>> maquinas;
     AdminSistema administrador;
@@ -568,7 +630,6 @@ int main(){
         int idCantMaq;
         bool apto = false;
         aux = rout;
-        //Agregar metodo buscar
         while(!apto){ //Bucle para seleccionar router aleatorio con cantidad de maquinas disponibles            
             numRout = rand() % cantidadRouters; //Eleccion de Router Aleatorio
             for(int j = 0; j < cantidadRouters; j++){ //Recorre la lista de Routers hasta encontrar el router aleatorio obtenido
@@ -587,7 +648,7 @@ int main(){
         numRout = idRout;
         numMaq = ++idCantMaq;
         Maquina<Router>* maquina= new Maquina<Router>(numMaq,numRout);
-        Router routerAsociado = aux.cabeza();
+        Router* routerAsociado = aux.getCabeza();
         maquina->setRouterAsociado(routerAsociado); //Asocio el router a la maquina
         maquinas.add(*maquina);
     }
@@ -616,6 +677,7 @@ int main(){
 
     aux = rout;
 
+    //Mejorar
     for(int i = 0; i<cantidadRouters; i++){  //Agrego las relaciones directas a la matriz
         aux2 = aux.cabeza().getVecinos();
         for(int j = 0; j < aux.cabeza().getVecinos().size(); j++){  
@@ -632,23 +694,33 @@ int main(){
     }
 
 
-    //Crear paginas y paquetes
-    
+    //Crear paginas 
+    Lista<Maquina<Router>> aux3 = maquinas;
+    Lista<Router> *prout = &rout;
+
     for(int i=0; i<pagsCanti; i++){
-        Pagina* pag = new Pagina();
-        int cantidadPaquetes = rand() % 20;
-        int orden = 1;
-        // for(int i = 0; i<cantidadPaquetes; i++){
-        //     Paquete paq = *pag->generarPaquete(orden, cantidadPaquetes);
-        //     paquetes.add(paq);
-        //     orden++;
-        // }
+        //Seleccion de maquina generadora aleatoria
+        int numMaquinaAleat = rand() % cantidadMaquinas;
+        for(int i = 0; i < cantidadMaquinas; i++){
+            int numMaqActual = aux3.cabeza().getMaquina();
+            if(numMaqActual== numMaquinaAleat){
+                Maquina<Router>* maquina = aux3.getCabeza();
+                Pagina* pagina = maquina->generarPaginaAleatoria(prout, cantidadRouters);
+                Router* routAsociado = maquina->getRouterAsociado();
+                //Envio de pagina
+                enviarPagina(*pagina, routAsociado);
+                break;
+            }
+            aux3 = *aux3.resto();
+        }
     }
 
     //Designar mejores rutas para los paquetes
+    
 
     //Crear admin del sistema 
 
     //Reconfigurar rutas de los paquetes
+    //Bucle de envios hasta que no haya mas paquetes en ningun router
 
 }
