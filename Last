@@ -275,13 +275,13 @@ template <class T> Pagina* Maquina<T>::generarPaginaAleatoria(Lista<T>* rout,int
     int numMaqFinal, numRoutFinal = generarDirecciondeEnvio(rout, cantidadRout);
     int routOrigen = numRouter;
     Pagina* nueva = new Pagina(numMaqFinal, numRoutFinal,routOrigen, direcMaquina, tamanioPag);
-    Pagina pag = *nueva;
     return nueva;
 }
 
 template<class T> int Maquina<T>::generarTamanioAleatorio(void)
 {
-    int tamanio = rand()% 100;
+    //Eleccion de 30 como tamanio maximo aleatorio
+    int tamanio = rand()% 30;
     return tamanio;
 }
 
@@ -293,12 +293,16 @@ template<class T> int Maquina<T>::generarDirecciondeEnvio(Lista<T>* rout, int ca
     return randMaq,randRout;
 }
 
+//Busca el router elegido aleatoriamente y a partir de el, elige aleatoriamente una de sus maquinas aleatoria 
 template<class T> int Maquina<T>::generarMaquina(int randRout,Lista<T> *rout)
 {   
+    //Recorre la lista de routers para encontrar el aleatorio
     if(rout->numRout==randRout){
         int randMaq = rand()%(rout->cantidadMaquinas); 
         return randMaq;
     }
+
+    //Si no es, sigue recursivamente enviando el resto de la lista
     else return generarMaquina(randRout, rout->getNext());
 }
 
