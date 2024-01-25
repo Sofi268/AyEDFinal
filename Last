@@ -115,7 +115,7 @@ class Paquete{
 private:
     int routerFinal, routerActual, routerOrigen;
     int maqFinal;
-    Lista<int> camino;
+    Lista<int> tablaDirecciones;
     int numOrden;
     int numTotalPaquetes;
     bitset<16> IPorigen;
@@ -133,22 +133,23 @@ public:
     int getMaquinaFinal(void){return maqFinal;};
     int getSigRouter(void);
     int getCantiTotalPaq(){return numTotalPaquetes;};
-    Lista<int> getCamino(void){return camino;};
+    Lista<int> getCamino(void){return tablaDirecciones;};
     int getRoutActual(void){return routerActual;};
     int getOrdenCla(void){return numOrdenCola;};
     int getRouterOrigen(void){return routerOrigen;};
     bitset <16> getIPorigen(void){return IPorigen;};
 
-    void setNuevoCamino(Lista<int> nuevoCamino);
-    void setTerminal(void);
-    void setRoutActual(int routAct);
-    void setOrdenCola(int nuevoNum);
+    void setNuevoCamino(Lista<int> nuevoCamino){tablaDirecciones = nuevoCamino;};
+    void setTerminal(void){terminal = true;};
+    void setRoutActual(int routAct){routerActual = routAct;};
+    void setOrdenCola(int nuevoNum){numOrdenCola = nuevoNum;};
 
-    void borrarElemCamino(void);
+    bool isTerminal(void){return terminal;};
+    void borrarElemCamino(void){tablaDirecciones.borrar();}; //Borra el primer elemento del camino
 
 };
 
-Paquete::Paquete(int routFnal, int maqFnal,int routActual,int numeroOrden, int numeroTotalPaquetes,bitset<16> IPorig, bitset<16> IPdest)
+Paquete::Paquete(int routFnal, int maqFnal, int routActual, int numeroOrden, int numeroTotalPaquetes, bitset<16> IPorig, bitset<16> IPdest)
 {
     routerFinal = routFnal;
     routerOrigen = routActual;
@@ -162,33 +163,11 @@ Paquete::Paquete(int routFnal, int maqFnal,int routActual,int numeroOrden, int n
     numOrdenCola = 0;
 }
 
+//Apenas llega un paquete a un router, este se elimina de la lista de su camino por lo que el primer elemento del mismo va a ser el siguiente destino
 int Paquete::getSigRouter()
 {   
-    int sigRout = camino.cabeza();
+    int sigRout = tablaDirecciones.cabeza();
     return sigRout;
-}
-
-void Paquete::setNuevoCamino(Lista<int> nuevoCamino)
-{   
-    camino = nuevoCamino;
-}
-
-void Paquete::setTerminal(){
-    terminal = true;
-}
-
-void Paquete::setRoutActual(int routAct)
-{
-    routerActual = routAct;
-}
-
-void Paquete::setOrdenCola(int nuevoNum)
-{
-    numOrdenCola = nuevoNum;
-}
-void Paquete::borrarElemCamino()
-{
-    camino.borrar();
 }
 
 //----------------------------------------Pagina----------------------------------------------------------------
@@ -227,7 +206,7 @@ Pagina::Pagina(int maquinaFinal, int routFinal,int routerOrigen, bitset<16> dire
     setIPdestino(maqFinal,routerFinal);
 }
 
-
+//Crea la pseudo direccion IP destino
 void Pagina::setIPdestino(int maq, int rout)
 {
     bitset<16> a(maq);
@@ -245,7 +224,7 @@ private:
     T* routerAsociado;
     bitset <16> direcMaquina;
     Pagina paginaEnviar;
-    Pagina paginaRecibida;
+    Lista<Pagina> paginasRecibidas;
 
 public:
     Maquina(void){};
@@ -259,7 +238,7 @@ public:
 
     void setDirecMaquina(int maq, int rout);
     void setPaginaRecibida(Lista<Paquete> paquetes);
-    void setRouterAsociado(T* router);
+    void setRouterAsociado(T* router){routerAsociado = router;};
 
     Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout);
     int generarTamanioAleatorio(void);
@@ -277,7 +256,6 @@ template<class T> Maquina<T>::Maquina(int maq, int rout)
 
 template<class T> void Maquina<T>::setDirecMaquina(int maq, int rout)
 {
-    bitset<16> direc;
     bitset<16> a(maq);
     bitset<16> b(rout);
     (a<<=8);
@@ -288,12 +266,7 @@ template<class T> void Maquina<T>::setPaginaRecibida(Lista<Paquete> paquetes)
 {   
     Paquete paq = paquetes.cabeza();
     Pagina* pag = new Pagina(numMaquina, numRouter,paq.getRouterOrigen(), paq.getIPorigen(), paq.getCantiTotalPaq());
-    paginaRecibida = pag;
-}
-
-template<class T> void Maquina<T>::setRouterAsociado(T* router)
-{
-    routerAsociado = router;
+    paginasRecibidas.add(pag);
 }
 
 template <class T> Pagina* Maquina<T>::generarPaginaAleatoria(Lista<T>* rout,int cantidadRout)
@@ -416,7 +389,7 @@ void Router::recibirPagina(Pagina pag)
         //Generar paquetes
         Paquete paquete = generarPaquete(routerFinal, maqFinal,routActual, numOrden, numTotalPaquetes, IPorigen, IPdestino);
         
-        //Setear camino del paquete
+        //Setear tablaDirecciones del paquete
         
         //Encolar paquetes
         encolarPaquete(paquete);
@@ -572,10 +545,10 @@ int *dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
     return D;
 }
 
-void camino(int P[], int s, int t)
+void tablaDirecciones(int P[], int s, int t)
 {  if (t==s) cout<< s<<"  ";
    else{
-        camino(P,s,P[t]);
+        tablaDirecciones(P,s,P[t]);
         cout<<t<<"  ";
    } 
 }
