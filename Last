@@ -85,7 +85,7 @@ template <class T> int Lista<T>::size()
 }
 
 template <class T> void Lista<T>::borrar(void)
-{ //borra el nodo cabeza
+{ //borrado del nodo cabeza
     if (!this->esVacia()) {
         Nodo<T>* tmp = czo;
         czo = czo->getNext();
@@ -163,7 +163,7 @@ Paquete::Paquete(int routFnal, int maqFnal, int routActual, int numeroOrden, int
     numOrdenCola = 0;
 }
 
-//Apenas llega un paquete a un router, este se elimina de la lista de su camino por lo que el primer elemento del mismo va a ser el siguiente destino
+//Al llegar un paquete al router, este se elimina de la lista de su camino por lo que el primer elemento del mismo va a ser el siguiente destino
 int Paquete::getSigRouter()
 {   
     int sigRout = tablaDirecciones.cabeza();
@@ -206,7 +206,7 @@ Pagina::Pagina(int maquinaFinal, int routFinal,int routerOrigen, bitset<16> dire
     setIPdestino(maqFinal,routerFinal);
 }
 
-//Crea la pseudo direccion IP destino
+//Creacion de pseudo direccion IP destino
 void Pagina::setIPdestino(int maq, int rout)
 {
     bitset<16> a(maq);
@@ -293,10 +293,10 @@ template<class T> int Maquina<T>::generarDirecciondeEnvio(Lista<T>* rout, int ca
     return randMaq,randRout;
 }
 
-//Busca el router elegido aleatoriamente y a partir de el, elige aleatoriamente una de sus maquinas aleatoria 
+//Busqueda del router elegido aleatoriamente y a partir de el, elige aleatoriamente una de sus maquinas aleatoria 
 template<class T> int Maquina<T>::generarMaquina(int randRout,Lista<T> *rout)
 {   
-    //Recorre la lista de routers para encontrar el aleatorio
+    //Recorrido de lista de routers para encontrar el aleatorio
     if(rout->numRout==randRout){
         int randMaq = rand()%(rout->cantidadMaquinas); 
         return randMaq;
@@ -315,8 +315,8 @@ private:
     int cantidadVecinos;
     int anchoBanda;
     int cantidadListTermi;
-    Lista<Maquina<Router>> maqAsociadas;
-    Lista<Router> routVecinos;
+    Lista<Maquina<Router>*> maqAsociadas;
+    Lista<Router*> routVecinos;
     Lista<Cola<Paquete>> colasVecinos;
     Lista<Lista<Paquete>> listasTerminales; 
     Lista<int> veciNum; //Lista de enteros con los numeros ID de los routers vecinos
@@ -335,7 +335,8 @@ public:
     void setNuevoVecino(void){cantidadVecinos++;};
 
     int generarAnchoBanda();
-    void agregarVecino(Router vecino);
+    void agregarVecino(Router* vecino);
+    void agregarMaquina(Maquina<Router>* maquina);
     void recibirPagina(Pagina pag);
     Paquete generarPaquete(int routerFinal, int maqFinal,int routActual, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino);
     void encolarPaquete(Paquete paq);
@@ -352,7 +353,7 @@ public:
 
 Router::Router()
 {
-    //Setea valores por defecto
+    //Seteo de valores por defecto
     IDRout = -1;
     cantidadMaquinas = 0;
     cantidadVecinos = 0;
@@ -362,24 +363,31 @@ Router::Router()
 
 int Router::generarAnchoBanda()
 {
-    //Genera un Ancho de Banda aleatorio entre 1 y 5
+    //Generacion de Ancho de Banda aleatorio entre 1 y 5
     anchoBanda = rand() % 5;
 }
 
-void Router::agregarVecino(Router vecino)
+void Router::agregarVecino(Router* vecino)
 {
-    //Aniado el router a la Lista de vecinos
+    //Aniade el router a la Lista de vecinos
     routVecinos.add(vecino);
     setNuevoVecino();
 
-    //Aniado el numero de router a la lista de enteros con los numeros de los routers vecinos
-    int numVeci = vecino.getIDRouter();
+    //Aniade el numero de router a la lista de enteros con los numeros de los routers vecinos
+    int numVeci = vecino->getIDRouter();
     veciNum.add(numVeci);
+}
+
+void Router::agregarMaquina(Maquina<Router>* maquina)
+{
+    //Aniade la maquina a la lista de maquinas asociadas
+    maqAsociadas.add(maquina);
+    setNuevaMaq();
 }
 
 void Router::recibirPagina(Pagina pag)
 {   
-    //Setear los atributos a cada paquete
+    //Seteo de atributos de cada paquete
     int numTotalPaquetes = pag.getTamanoPagina();
     int routerFinal = pag.getRoutFinal();
     int maqFinal = pag.getNumMaqFinal();
@@ -390,12 +398,14 @@ void Router::recibirPagina(Pagina pag)
     
     for(int i = 0; i<numTotalPaquetes; i++){
         
-        //Generar paquetes
+        //Generacion de paquetes
         Paquete paquete = generarPaquete(routerFinal, maqFinal,routActual, numOrden, numTotalPaquetes, IPorigen, IPdestino);
         
-        //Setear tablaDirecciones del paquete
+        //Seteo tablaDirecciones(camino) del paquete por Djikstra
         
-        //Encolar paquetes
+
+
+        //Encolado paquetes
         encolarPaquete(paquete);
         numOrden++;
     }
@@ -407,9 +417,10 @@ Paquete Router::generarPaquete(int routerFinal, int maqFinal,int routActual, int
     return *paquete;
 }
 
-void Router::encolarPaquete(Paquete paq) //Recorrer la lista de colas hasta encontrar el router que corresponde
+//Recorrido de lista de colas hasta encontrar el router que corresponde
+void Router::encolarPaquete(Paquete paq) 
 {   
-    //Set orden de cola
+    //Set orden de cola para que dos paquetes con el mismo destino no esten consecutivamente 
     int sigRout = paq.getSigRouter();
     Lista<Cola<Paquete>> aux = colasVecinos;
 
@@ -428,8 +439,9 @@ void Router::recibirPaquete(Paquete paq)
     paq.setRoutActual(IDRout);
     paq.borrarElemCamino();
 
-    //Determino si el paquete es terminal o vecino
-    if(paq.getCamino().size()==0){
+    //Se determina si el paquete es terminal o vecino
+    if(paq.getRouterFinal()==IDRout){
+        paq.setTerminal();
         recibirPaqueteTerminal(paq);
     }
     else{
@@ -439,7 +451,7 @@ void Router::recibirPaquete(Paquete paq)
 
 void Router::recibirPaqueteTerminal(Paquete paq)
 {
-    //Aniado el paquete a la Lista Terminal correspondiente
+    //Aniade el paquete a la Lista Terminal correspondiente
     Lista<Lista<Paquete>> listTerminalesAux = listasTerminales;
     Lista<Paquete>* lisAux;
     int numMaq;
@@ -452,25 +464,25 @@ void Router::recibirPaqueteTerminal(Paquete paq)
     int tamanioPag = paq.getCantiTotalPaq();
     int tamanioActual = listaTerminal.size();
 
-    //Compruebo si llegaron todos los paquetes
-    //En caso de que si, los ordeno
+    //Comprobacion si llegaron todos los paquetes
+    //En caso de que si, orden de paquetes
     if(tamanioPag == tamanioActual) ordenarPaqueteTerminal(listaTerminal);
 }
 
 void Router::recibirPaqueteVecino(Paquete paq)
 {
-    //Setear paq.setOrdenCola;
+    //Seteo paq.setOrdenCola;
 }
 
 void Router::ordenarPaqueteTerminal(Lista<Paquete> paquetes)
 {
-    //Ordenar la listaTerminal cuando este completa
+    //Orden de listaTerminal cuando este completa
     // enviarPaqueteTerminal(paquetes);
 }
 
 void Router::enviarPaqueteVecino(Lista<Paquete> paquetes)
 {
-    //Recorrer lista de Maquinas asociadas hasta encontrar la correspondiente
+    //Recorrido de lista de Maquinas asociadas hasta encontrar la correspondiente
     Lista<Maquina<Router>> maqsAux= maqAsociadas;
     int numMaqFNal = paquetes.cabeza().getMaquinaFinal();
     int maq;
@@ -487,7 +499,7 @@ void Router::enviarPaqueteVecino(Lista<Paquete> paquetes)
 
 void Router::enviarPaqueteTerminal(Lista<Paquete> paquetes)
 {
-    //Enviar paquete a la maquina final
+    //Envio de paquete a la maquina final
     Maquina<Router>* maq;
     //borrarPaquete()
 
@@ -495,7 +507,7 @@ void Router::enviarPaqueteTerminal(Lista<Paquete> paquetes)
 
 void Router::borrarPaquete(Paquete paq)
 {
-    //Borrar de la cola correspondiente
+    //Borrado de cola correspondiente
 }
 
 int Router::turno()
@@ -579,11 +591,11 @@ void enviarPagina(Pagina pag, Router* routAsociado)
 //----------------------------------------------- Main-----------------------------------------------------
 
 int main(){
-    Lista<Router> rout;
-    Lista<Maquina<Router>> maquinas;
+    Lista<Router> rout; //Lista de todos los routers creados
+    Lista<Maquina<Router>> maquinas; //Lista de todas las maquinas creadas, independiente del router asociado
     AdminSistema administrador;
-    Lista<Paquete> paquetes;
-    int pagsCanti = rand() % 50;
+    Lista<Paquete> paquetes; //Lista de todos los paquetes creados, independiente de la maquina creadora
+    int pagsCanti = rand() % 50; //Numero aleatorio de paginas generadas
     int baseCantidadVeci = 4;
     int limInferior = 0;
     Lista<Router> aux;
@@ -605,29 +617,31 @@ int main(){
         int numMaq,numRout;
         int idRout;
         int idCantMaq;
-        bool apto = false;
-        aux = rout;
-        while(!apto){ //Bucle para seleccionar router aleatorio con cantidad de maquinas disponibles            
+        bool apto = false;//Comprobacion que numero de maquinas del router elegido sea menor que el limite (256)
+        aux = rout; //Lista auxiliar para recorrer los routers hasta encontrar el ID del router aleatorio 
+
+        //Bucle para seleccionar un router aleatorio apto, con cantidad de maquinas disponibles 
+        while(!apto){ 
             numRout = rand() % cantidadRouters; //Eleccion de Router Aleatorio
             for(int j = 0; j < cantidadRouters; j++){ //Recorre la lista de Routers hasta encontrar el router aleatorio obtenido
                 idRout = aux.cabeza().getIDRouter();
                 if(numRout == idRout){ //Caso en que se encuentra el router correspondiente
                     idCantMaq = aux.cabeza().getCantidadMaq();//Obtener la cantidad de Maquinas asociada al router aleatorio obtenido
-                    if(idCantMaq < cantidadRouters){  //Comprobar si la cantidad de maquinas es menor a la maxima posible
+                    if(idCantMaq < cantidadMaquinas){  //Comprobar si la cantidad de maquinas es menor a la maxima posible
                         apto = true;
-                        aux.cabeza().setNuevaMaq(); //Actualizo la cantidad de maquinas del router
+                        numRout = idRout;
+                        numMaq = ++idCantMaq;
+                        Maquina<Router>* maquina= new Maquina<Router>(numMaq,numRout);//Crea la nueva maquina
+                        Router* routerAsociado = aux.getCabeza();
+                        maquina->setRouterAsociado(routerAsociado);//Asocia el router a la maquina
+                        routerAsociado->agregarMaquina(maquina);//Asocia la maquina al router
+                        maquinas.add(*maquina);//Agrega la maquina nueva a la lista de maquinas    
                         break;
                     }
                 }
-                aux = *aux.resto(); //No es el router o la cantidad de maquinas del router elegido es maxima, asi que continua con el siguiente
+                aux = *aux.resto(); //Caso en que no es el router o la cantidad de maquinas del router elegido es maxima, asi que continua con el siguiente
             }
         }
-        numRout = idRout;
-        numMaq = ++idCantMaq;
-        Maquina<Router>* maquina= new Maquina<Router>(numMaq,numRout);
-        Router* routerAsociado = aux.getCabeza();
-        maquina->setRouterAsociado(routerAsociado); //Asocio el router a la maquina
-        maquinas.add(*maquina);
     }
 
     //Creacion de conexiones entre los Routers
@@ -642,15 +656,15 @@ int main(){
             int numRoutVeci = rand() % (cantidadRouters - 1);
 
             actual = buscar(i , rout);
-            actual->agregarVecino(*vecino);
+            actual->agregarVecino(vecino);
 
             vecino = buscar(numRoutVeci , rout);
-            vecino->agregarVecino(*actual);
+            vecino->agregarVecino(actual);
         }
         limInferior++;
     }
     
-    //Crear Matriz de Adyacencia entre ellos
+    //Creacion de Matriz de Adyacencia entre ellos
 
     aux = rout;
 
@@ -671,7 +685,8 @@ int main(){
     }
 
 
-    //Crear paginas 
+    //Creacion de paginas 
+
     Lista<Maquina<Router>> aux3 = maquinas;
     Lista<Router> *prout = &rout;
 
@@ -692,12 +707,12 @@ int main(){
         }
     }
 
-    //Designar mejores rutas para los paquetes
+    //Designacion mejores rutas para los paquetes
     
 
-    //Crear admin del sistema 
+    //Creacion de admin del sistema 
 
-    //Reconfigurar rutas de los paquetes
+    //Reconfiguracion rutas de los paquetes
     //Bucle de envios hasta que no haya mas paquetes en ningun router
 
 }
