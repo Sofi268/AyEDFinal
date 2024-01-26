@@ -571,14 +571,14 @@ void tablaDirecciones(int P[], int s, int t)
 
 //----------------------------------Metodos extra-----------------------------------------------
 
-Router* buscar(int numRout, Lista<Router> routers)
+Router* buscarRouter(int numRout, Lista<Router> routers)
 {
     Router* buscado; 
     for(int i = 0; i < routers.size(); i++){
         if(numRout == routers.cabeza().getIDRouter()){
             buscado = &routers.cabeza();
         }
-        else buscar(numRout, *routers.resto());
+        else buscarRouter(numRout, *routers.resto());
     }
     return buscado;
 }
@@ -615,32 +615,24 @@ int main(){
 
     for(int i = 0; i < cantidadMaquinas; i++){
         int numMaq,numRout;
-        int idRout;
         int idCantMaq;
         bool apto = false;//Comprobacion que numero de maquinas del router elegido sea menor que el limite (256)
-        aux = rout; //Lista auxiliar para recorrer los routers hasta encontrar el ID del router aleatorio 
 
         //Bucle para seleccionar un router aleatorio apto, con cantidad de maquinas disponibles 
         while(!apto){ 
             numRout = rand() % cantidadRouters; //Eleccion de Router Aleatorio
-            for(int j = 0; j < cantidadRouters; j++){ //Recorre la lista de Routers hasta encontrar el router aleatorio obtenido
-                idRout = aux.cabeza().getIDRouter();
-                if(numRout == idRout){ //Caso en que se encuentra el router correspondiente
-                    idCantMaq = aux.cabeza().getCantidadMaq();//Obtener la cantidad de Maquinas asociada al router aleatorio obtenido
-                    if(idCantMaq < cantidadMaquinas){  //Comprobar si la cantidad de maquinas es menor a la maxima posible
-                        apto = true;
-                        numRout = idRout;
-                        numMaq = ++idCantMaq;
-                        Maquina<Router>* maquina= new Maquina<Router>(numMaq,numRout);//Crea la nueva maquina
-                        Router* routerAsociado = aux.getCabeza();
-                        maquina->setRouterAsociado(routerAsociado);//Asocia el router a la maquina
-                        routerAsociado->agregarMaquina(maquina);//Asocia la maquina al router
-                        maquinas.add(*maquina);//Agrega la maquina nueva a la lista de maquinas    
-                        break;
-                    }
-                }
-                aux = *aux.resto(); //Caso en que no es el router o la cantidad de maquinas del router elegido es maxima, asi que continua con el siguiente
-            }
+            Router* routTentativo = buscarRouter(numRout,rout); 
+            idCantMaq = routTentativo->getCantidadMaq();//Obtencion de la cantidad de Maquinas asociada al router aleatorio obtenido
+            
+            if(idCantMaq < cantidadMaquinas){  //Comprobacion de la cantidad de maquinas es menor a la maxima Tentativo
+                Router* routApto = routTentativo;
+                numMaq = ++idCantMaq;
+                Maquina<Router>* maquinaNueva = new Maquina<Router>(numMaq,numRout);//Creacion de la nueva maquina
+                maquinaNueva->setRouterAsociado(routApto);//Asociacion del router a la maquina
+                routApto->agregarMaquina(maquinaNueva);//Asociacion de la maquina al router
+                maquinas.add(*maquinaNueva);//Agregado de la maquina nueva a la lista de maquinas  
+                apto = true;  
+            }            
         }
     }
 
@@ -655,10 +647,10 @@ int main(){
         for(int j = 0; j<cantVeciAleat; j++){
             int numRoutVeci = rand() % (cantidadRouters - 1);
 
-            actual = buscar(i , rout);
+            actual = buscarRouter(i , rout);
             actual->agregarVecino(vecino);
 
-            vecino = buscar(numRoutVeci , rout);
+            vecino = buscarRouter(numRoutVeci , rout);
             vecino->agregarVecino(actual);
         }
         limInferior++;
