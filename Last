@@ -227,6 +227,7 @@ private:
     bitset <16> direcMaquina;
     Pagina paginaEnviar;
     Lista<Pagina> paginasRecibidas;
+    int numMaqGeneral;
 
 public:
     Maquina(void){};
@@ -236,10 +237,12 @@ public:
     int getMaquina(void){return numMaquina;};
     int getRouter(void){return numRouter;};
     bitset <16> getDirec(void){return direcMaquina;};
-    T* getRouterAsociado(){return routerAsociado;};
+    T* getRouterAsociado(void){return routerAsociado;};
+    int getNumMaqGeneral(void){return numMaqGeneral;};
 
     void setDirecMaquina(int maq, int rout);
     void setPaginaRecibida(Lista<Paquete> paquetes);
+    void setNumMaqGeneral(int numMaq){numMaqGeneral = numMaq;};
     void setRouterAsociado(T* router){routerAsociado = router;};
 
     Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout);
@@ -337,7 +340,7 @@ public:
     void setNuevoVecino(void){cantidadVecinos++;};
 
     int generarAnchoBanda();
-    void agregarVecino(Router* vecino);
+    void agregarVecino(Router* proutVecino);
     void agregarMaquina(Maquina<Router>* maquina);
     void recibirPagina(Pagina pag);
     Paquete generarPaquete(int routerFinal, int maqFinal,int routActual, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino);
@@ -369,14 +372,14 @@ int Router::generarAnchoBanda()
     anchoBanda = rand() % 5;
 }
 
-void Router::agregarVecino(Router* vecino)
+void Router::agregarVecino(Router* proutVecino)
 {
     //Aniade el router a la Lista de vecinos
-    routVecinos.add(vecino);
+    routVecinos.add(proutVecino);
     setNuevoVecino();
 
     //Aniade el numero de router a la lista de enteros con los numeros de los routers vecinos
-    int numVeci = vecino->getIDRouter();
+    int numVeci = proutVecino->getIDRouter();
     veciNum.add(numVeci);
 }
 
@@ -441,7 +444,7 @@ void Router::recibirPaquete(Paquete paq)
     paq.setRoutActual(IDRout);
     paq.borrarElemCamino();
 
-    //Se determina si el paquete es terminal o vecino
+    //Se determina si el paquete es terminal o proutVecino
     if(paq.getRouterFinal()==IDRout){
         paq.setTerminal();
         recibirPaqueteTerminal(paq);
@@ -528,7 +531,7 @@ int *dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
 {
     static int D[cantidadRouters];
     int S[cantidadRouters];
-    int actual, i, k, b;
+    int proutActual, i, k, b;
     int menordist, nuevadist;
 
     for(i=0;i<cantidadRouters;i++){
@@ -536,16 +539,16 @@ int *dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
                             D[i]=INFI;
                             Pre[i]= -1;
     }
-    S[s]=MIEMBRO; D[s]=0; actual=s; b=1; k=0;
-    while((actual!=t)&&(b==1)){
+    S[s]=MIEMBRO; D[s]=0; proutActual=s; b=1; k=0;
+    while((proutActual!=t)&&(b==1)){
                     b=0;
                     menordist=INFI;
                     for(i=0;i<cantidadRouters;i++){             
                             if(S[i]==NO_MIEMBRO){
-                                    nuevadist=D[actual]+C[actual][i];
+                                    nuevadist=D[proutActual]+C[proutActual][i];
                                     if(nuevadist<D[i]){
                                         D[i]=nuevadist;
-                                        Pre[i]=actual; b=1;
+                                        Pre[i]=proutActual; b=1;
                                     }
                                     if(D[i]<menordist){
                                         menordist=D[i];
@@ -553,8 +556,8 @@ int *dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
                                     }
                             }
                     }                               
-                    actual=k; 
-                    S[actual]=MIEMBRO;
+                    proutActual=k; 
+                    S[proutActual]=MIEMBRO;
                     printf("\n\n         D     S     Pre");
                     for(i=0;i<cantidadRouters;i++){
                             printf("\n[%2i] %5i %5i %5i     ",i,D[i], S[i],Pre[i]);
@@ -584,6 +587,17 @@ Router* buscarRouter(int numRout, Lista<Router> routers)
     }
     return buscado;
 }
+Maquina<Router>* buscarMaquina(int numMaquina, Lista<Maquina<Router>> maquinas)
+{
+    Maquina<Router>* buscada; 
+    for(int i = 0; i < maquinas.size(); i++){
+        if(numMaquina == maquinas.cabeza().getNumMaqGeneral()){
+            buscada = &maquinas.cabeza();
+        }
+        else buscarMaquina(numMaquina, *maquinas.resto());
+    }
+    return buscada;
+}
 
 void enviarPagina(Pagina pag, Router* routAsociado)
 {
@@ -600,7 +614,8 @@ int main(){
     int pagsCanti = rand() % 50; //Numero aleatorio de paginas generadas
     int baseCantidadVeci = 4;
     int limInferior = 0;
-    Lista<Router> listaAuxRouters;
+    int numMaqGnral = 0;
+    Lista<Router> *plistaAuxRout = &rout;
     fill(*matrizAdy, *matrizAdy + cantidadRouters*cantidadRouters, INFI); //Inicializo la matriz de adyacencia con todos los nodos desconectados
     
     //Creacion de los routers
@@ -615,6 +630,7 @@ int main(){
 
     for(int i = 1; i <= cantidadMaquinas; i++){
         int numMaq,numRout;
+        numMaqGnral = i;
         int idCantMaq;
         bool apto = false;//Comprobacion que numero de maquinas del router elegido sea menor que el limite (256)
 
@@ -630,6 +646,7 @@ int main(){
                 Maquina<Router>* maquinaNueva = new Maquina<Router>(numMaq,numRout);//Creacion de la nueva maquina
                 maquinaNueva->setRouterAsociado(routApto);//Asociacion del router a la maquina
                 routApto->agregarMaquina(maquinaNueva);//Asociacion de la maquina al router
+                maquinaNueva->setNumMaqGeneral(numMaqGnral); //Seteo de numero de maquina general
                 maquinas.add(*maquinaNueva);//Agregado de la maquina nueva a la lista de maquinas  
                 apto = true;  
             }            
@@ -640,49 +657,45 @@ int main(){
     //Dos bucles: el primero para elegir los routers vecinos y guardarlos, y el segundo para guardar en los vecinos ese router
 
     for(int i = 1; i <= cantidadRouters; i++){ //i representa el numero del router al que se le esta designando los vecinos
-        Router* actual = listaAuxRouters.getCabeza();
-        Router* vecino;
-        int idActual = actual->getIDRouter();
+        Router* proutActual = plistaAuxRout->getCabeza();
+        Router* proutVecino;
+        int idActual = proutActual->getIDRouter();
         int idVecino;
         int cantVeciAleat = (rand() % baseCantidadVeci) + limInferior;
 
         for(int j = 0; j<cantVeciAleat; j++){
             int numRoutVeci = rand() % (cantidadRouters);
-            if(numRoutVeci!=actual->getIDRouter()){
-                vecino = buscarRouter(numRoutVeci , rout);
-                idVecino = vecino->getIDRouter();
+            if(numRoutVeci!=proutActual->getIDRouter()){
+                proutVecino = buscarRouter(numRoutVeci , rout);
+                idVecino = proutVecino->getIDRouter();
 
-                actual->agregarVecino(vecino);
-                vecino->agregarVecino(actual);
-                matrizAdy[idActual][idVecino] = 1; //Actualizo la matriz de Adyacencia
+                proutActual->agregarVecino(proutVecino);
+                proutVecino->agregarVecino(proutActual);
+                matrizAdy[idActual][idVecino] = 1; //Actualizacion de la matriz de Adyacencia
             }
-            else j--;
+            else j--; //Caso en que el numero del router proutVecino sea su mismo numero de ID
         }
-
         limInferior++;
-        listaAuxRouters = *listaAuxRouters.resto();
+        plistaAuxRout = plistaAuxRout->resto(); //Movimiento hacia el siguiente router
     }
 
     //Creacion de paginas 
 
-    Lista<Maquina<Router>> listaAuxMaquinas = maquinas;
     Lista<Router> *prout = &rout;
 
     for(int i=0; i<pagsCanti; i++){
+
         //Seleccion de maquina generadora aleatoria
         int numMaquinaAleat = rand() % cantidadMaquinas;
-        for(int i = 0; i < cantidadMaquinas; i++){
-            int numMaqActual = listaAuxMaquinas.cabeza().getMaquina();
-            if(numMaqActual== numMaquinaAleat){
-                Maquina<Router>* maquina = listaAuxMaquinas.getCabeza();
-                Pagina* pagina = maquina->generarPaginaAleatoria(prout, cantidadRouters);
-                Router* routAsociado = maquina->getRouterAsociado();
-                //Envio de pagina
-                enviarPagina(*pagina, routAsociado);
-                break;
-            }
-            listaAuxMaquinas = *listaAuxMaquinas.resto();
-        }
+        Maquina<Router>* maquinaAleat;
+        maquinaAleat = buscarMaquina(numMaquinaAleat, maquinas);
+
+        //Generacion de la pagina
+        Pagina* pagina = maquinaAleat->generarPaginaAleatoria(prout, cantidadRouters);
+
+        //Envio de pagina al router de la maquina correspondiente
+        Router* routAsociado = maquinaAleat->getRouterAsociado();
+        enviarPagina(*pagina, routAsociado);
     }
 
     //Designacion mejores rutas para los paquetes
@@ -692,5 +705,4 @@ int main(){
 
     //Reconfiguracion rutas de los paquetes
     //Bucle de envios hasta que no haya mas paquetes en ningun router
-
 }
