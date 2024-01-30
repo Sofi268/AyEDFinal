@@ -43,6 +43,7 @@ public:
     Lista* resto(void); 
     int size(void);
     void borrar(void); //borra la cabeza
+    void borrarDato(T d) { borrarD(d, NULL); }//borra el nodo que contiene d
 };
 
 template <class T> void Lista<T>::add(T d) 
@@ -95,11 +96,30 @@ template <class T> void Lista<T>::borrar(void)
     }
 }
 
+template <class T> void Lista<T>::borrarD(T d, Nodo<T>* ant)
+{
+    if (!this->esvacia()) {
+        if (d == this->cabeza()) {
+            if (ant == NULL) {//al principio
+                this->borrar();
+            }
+            else {//entre medio
+                ant->set_next(czo->get_next());
+                delete czo;
+            }
+        }
+        else  this->resto()->borrarD(d, czo);
+
+    }
+}
+
 //------------------------------------------------- Cola Template-------------------------------------------------
 
 template <class T> class Cola :public Lista<T> {
 private:
-    int numRouter, idAnterior, numOrden;
+    int numRouter;
+    int idAnterior; //Pagina a la que pertenece el ultimo elemento de la cola
+    int numOrden; //Cantidad de elementos que tiene la cola
 public:
     Cola(void) { Lista<T>(); };
     Cola(int numRout, int idAnt, int numOrden);
@@ -109,7 +129,7 @@ public:
     int getNumOrden(void){return numOrden;};
     void setIdAnt(int ant){idAnterior = ant;}
     void setCantiPaqMas(void){numOrden++;};
-    void setOrdenMenos(void){numOrden--;};
+    void setCantiPaqMenos(void){numOrden--;};
     T tope(void) { return this->last(); };
     bool colavacia(void) { return this->esVacia(); };
     void encolar(T a) { this->add(a); };
@@ -144,6 +164,7 @@ public:
     Paquete(int routFnal, int maqFnal,int routerActual, int numeroOrden, int numeroTotalPaquetes,bitset<16> IPorigen,bitset<16> IPdest,int pag);
     ~Paquete(void){};
 
+    //Getters
     int getRouterFinal(void){return routerFinal;};
     int getMaquinaFinal(void){return maqFinal;};
     int getSigRouter(void);
@@ -155,13 +176,16 @@ public:
     bitset <16> getIPorigen(void){return IPorigen;};
     int getNumPag(void){return numPag;};
 
+    //Setters
     void setNuevoCamino(Lista<int> nuevoCamino){tablaDirecciones = nuevoCamino;};
     void setTerminal(void){terminal = true;};
     void setRoutActual(int routAct){routerActual = routAct;};
     void setOrdenCola(int nuevoNum){numOrdenCola = nuevoNum;};
 
     bool isTerminal(void){return terminal;};
-    void borrarElemCamino(void){tablaDirecciones.borrar();}; //Borra el primer elemento del camino
+
+    //Borra el primer elemento del camino
+    void borrarElemCamino(void){tablaDirecciones.borrar();}; 
 
 };
 
@@ -252,17 +276,20 @@ public:
     Maquina(int maq, int rout);
     ~Maquina(void){};
 
+    //Getters
     int getMaquina(void){return numMaquina;};
     int getRouter(void){return numRouter;};
     bitset <16> getDirec(void){return direcMaquina;};
     T* getRouterAsociado(void){return routerAsociado;};
     int getNumMaqGeneral(void){return numMaqGeneral;};
 
+    //Setters
     void setDirecMaquina(int maq, int rout);
     void setPaginaRecibida(Lista<Paquete> paquetes);
     void setNumMaqGeneral(int numMaq){numMaqGeneral = numMaq;};
     void setRouterAsociado(T* router){routerAsociado = router;};
 
+    //Creacion de una pagina
     Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag);
     int generarTamanioAleatorio(void);
     int generarDirecciondeEnvio(Lista<T>* rout,int cantidadRout);
@@ -340,14 +367,11 @@ private:
     int cantidadListTermi;
     Lista<Maquina<Router>*> maqAsociadas;
     Lista<Router*> routVecinos;
-    Lista<Cola<Paquete>> colasVecinos;
-    Lista<int> veciConCola; //Numeros ID de routers vecinos con colas de espera
-    Lista<int> *listaAuxNumColas = &veciConCola;
+    Lista<Cola<Paquete>> colasVeciEnvios;
+    Lista<int> veciConEspera; //Numeros ID de routers vecinos con colas de espera 
     Lista<Lista<Paquete>> listasTerminales; 
     Lista<int> veciNum; //Lista de enteros con los numeros ID de los routers vecinos
-    Cola<Paquete> paqEnEspera;
-    Paquete paqueteEspera;
-    Lista<Cola<Paquete>> *listaAuxColasVecinos = &colasVecinos;
+    Lista<Cola<Paquete>> paqEnEspera;
 
 public:
     Router();
@@ -371,13 +395,14 @@ public:
 
     //Recepcion  de paginas y generacion y encolamiento de paquetes
     //Router como generador
-    void recibirPagina(Pagina pag);
+    void crearPaquetes(Pagina pag);
     Paquete generarPaquete(int routerFinal, int maqFinal,int routActual, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino, int numPag);
     void encolarPaquete(Paquete paq);
-    bool confirmar(int sigRout);
+    bool tieneColaEspera(Lista<int> colas, int idRout, int i);
+    Cola<Paquete>* buscarCola(Lista<Cola<Paquete>> colas, int idRouter,int i);
 
     //Recepcion y distribucion de paquetes de un router vecino
-    //Router como Receptor
+    //Router como receptor
     void recibirPaquete(Paquete paq);
     void recibirPaqueteTerminal(Paquete paq);
     void recibirPaqueteVecino(Paquete paq);
@@ -419,6 +444,10 @@ void Router::agregarVecino(Router* proutVecino)
     //Aniade el numero de router a la lista de enteros con los numeros de los routers vecinos
     int numVeci = proutVecino->getIDRouter();
     veciNum.add(numVeci);
+
+    //Creacion de cola de envio
+    Cola<Paquete>* nuevaCola = new Cola<Paquete>(numVeci, 0, 0);
+    colasVeciEnvios.add(*nuevaCola);
 }
 
 void Router::agregarMaquina(Maquina<Router>* maquina)
@@ -428,7 +457,7 @@ void Router::agregarMaquina(Maquina<Router>* maquina)
     setNuevaMaq();
 }
 
-void Router::recibirPagina(Pagina pag)
+void Router::crearPaquetes(Pagina pag)
 {   
     //Seteo de atributos de cada paquete
     int numTotalPaquetes = pag.getTamanoPagina();
@@ -438,20 +467,14 @@ void Router::recibirPagina(Pagina pag)
     bitset<16> IPorigen = pag.getIPorigen();
     bitset<16> IPdestino = pag.getIPdestino();
     int numPag = pag.getNumPag();
+    int a = 0;
     
     for(int i = 0; i<numTotalPaquetes; i++){
         
         //Generacion de paquetes
         Paquete paquete = generarPaquete(routerFinal, maqFinal,routActual, i, numTotalPaquetes, IPorigen, IPdestino, numPag);
         
-        //Seteo tablaDirecciones(camino) del paquete por Djikstra
-        Falta
-
-
-        //Encolado paquetes
-        Mal porque tengo que buscar la forma que no se manden todos los paquetes de una misma pagina al mismo tiempo
-
-        encolarPaquete(paquete);
+        //Seteo tablaDirecciones(camino) del paquete por Djikstra 
     }
 }
 
@@ -461,71 +484,91 @@ Paquete Router::generarPaquete(int routerFinal, int maqFinal,int routActual, int
     return *paquete;
 }
 
-//Recorrido de lista de colas hasta encontrar el router que corresponde
-void Router::encolarPaquete(Paquete paq) 
-{   
-    bool yaTiene;
-    //Confirmar si el vecino a enviar el paquete ya tiene una cola
-    int sigRout = paq.getSigRouter();
-    yaTiene = confirmar(sigRout);
-
-    //Se añade el paquete a la cola existente
-    if(yaTiene){
-        //Set orden de cola para que dos paquetes con el mismo destino no esten consecutivamente 
-        for (int i= 0; i<cantidadVecinos; i++){
-            int numActual = listaAuxColasVecinos->cabeza().getNumRout();
-            if(numActual==sigRout){
-                Cola<Paquete> *colaVecino = listaAuxColasVecinos->getCabeza();
-
-                //Chequeo de que no haya un paquete de la misma pagina antes
-                int numPagina = paq.getNumPag();
-                int numPagCola = colaVecino->getIdAnt();
-
-                //Caso en que este un paquete antes de la misma pagina
-                if(numPagina==numPagCola){
-                    paqEnEspera.add(paq);
-                    break;
-                }
-
-                //Caso en que el paquete previo sea de una pagina diferente
-                else{
-                    colaVecino->setCantiPaqMas(); //Aumento de numero de paquetes en la cola del vecino
-                    paq.setOrdenCola(colaVecino->getNumOrden());// Configurar el orden de cola
-                    colaVecino->setIdAnt(paq.getNumPag());
-                    colaVecino->encolar(paq);
-                    break;
-                }
-            }
-            listaAuxColasVecinos = listaAuxColasVecinos->resto();
-        } 
-        listaAuxColasVecinos = &colasVecinos; //Reseteo de lista auxiliar
-    }
-
-    //Se crea una nueva cola
+//Buscar cola de router correspondiente
+Cola<Paquete>* Router::buscarCola(Lista<Cola<Paquete>> colas, int idRouter,int i)
+{
+    int id = colas.cabeza().getNumRout();
+    if(id==idRouter) return colas.getCabeza();
+    if(i==colas.size()) return nullptr;
     else{
-        int numPag = paq.getNumPag();
-        Cola<Paquete> *nuevaCola = new Cola<Paquete>(sigRout, numPag,1);
-        nuevaCola->add(paq); //Se aniade el paquete a la nueva cola
-        colasVecinos.add(*nuevaCola); //Se aniade la cola a la lista de colas
-        veciConCola.add(sigRout); //Se confirma que el router vecino ya tiene una cola de espera
+        i++;
+        buscarCola(*colas.resto(), idRouter, i);
     }
 }
 
-bool Router::confirmar(int sigRout)
+bool Router::tieneColaEspera(Lista<int> colas, int idRout, int inicio)
 {
-    bool tiene = false;
-    for(int i=0; i<veciConCola.size(); i++){
-        int idVeci = listaAuxNumColas->cabeza();
-        if(idVeci==sigRout){
-            tiene = true;
-            return tiene;
+    int id = colas.cabeza();
+    if(id==idRout) return true;
+    if(inicio == colas.size()) return false;
+    else{
+        i++;
+        tieneColaEspera(*colas.resto(), idRout, inicio);
+    }
+}
+
+void Router::encolarPaquete(Paquete paq) 
+{
+    int router = paq.getSigRouter();
+    int inicio = 1;
+    bool espera = tieneColaEspera(veciConEspera, router, inicio);
+    int numeroPag = paq.getNumPag();
+
+    //Caso en que todavia no hay una cola de espera de ese router
+    if(!espera){
+        Cola<Paquete>* pcolaVecino = buscarCola(colasVeciEnvios, router, inicio);
+        int ant = pcolaVecino->getIdAnt();
+        int numeroPag = paq.getNumPag();
+        //Si es de la misma pagina que el paquete anterior se crea una cola de espera y se agrega el paquete
+        if(ant == numeroPag){
+            Cola<Paquete>* nuevaColaEspera = new Cola<Paquete>(router, ant, 0);
+            nuevaColaEspera->encolar(paq);
+            nuevaColaEspera->setCantiPaqMas();
+            paqEnEspera.add(*nuevaColaEspera);
+            veciConEspera.add(router);
         }
-        else {
-            listaAuxNumColas = listaAuxNumColas->resto();
+        //Si no es el de la misma pagina, simplemente se agrega a la cola de envios del vecino
+        else{
+            Cola<Paquete>* colaVeci = buscarCola(colasVeciEnvios, router, inicio);
+            colaVeci->encolar(paq);
+            colaVeci->setCantiPaqMas();
+            colaVeci->setIdAnt(ant);
         }
     }
-    listaAuxNumColas = &veciConCola; //Reseteo de lista auxiliar
-    return tiene;
+    else{
+        Cola<Paquete>* pcolaEspera = buscarCola(paqEnEspera, router, inicio);
+        int ant = pcolaEspera->getIdAnt();
+        int numeroPag = paq.getNumPag();
+        //Si es de la misma pagina que el ultimo paquete encolado, se encola tras este en la cola de espera
+        if(ant == numeroPag){
+            pcolaEspera->encolar(paq);
+            pcolaEspera->setCantiPaqMas();
+        }
+
+        else{
+            //Primero se encola el paquete nuevo
+            Cola<Paquete>* pcolaVeci = buscarCola(colasVeciEnvios, router, inicio);
+            pcolaVeci->encolar(paq);
+            pcolaVeci->setCantiPaqMas();
+            pcolaVeci->setIdAnt(numeroPag);
+
+            //Luego se encola un paquete de la lista de espera
+            Paquete paqueteEspera = pcolaEspera->tope();
+            pcolaVeci->encolar(paqueteEspera);
+            pcolaVeci->setCantiPaqMas();
+            int numPaq = paqueteEspera.getNumPag();
+            pcolaVeci->setIdAnt(numPaq);
+
+            //Despues se desencola el paquete de la cola de espera
+            pcolaEspera->desencolar();
+            pcolaEspera->setCantiPaqMenos();
+
+            //Finalmente se borra cola si no hay mas elementos
+            if(pcolaEspera->colavacia()){
+                paqEnEspera.borrarDato(*pcolaEspera);
+            }
+        }
+    }
 }
 
 void Router::recibirPaquete(Paquete paq)
@@ -692,7 +735,7 @@ Maquina<Router>* buscarMaquina(int numMaquina, Lista<Maquina<Router>> maquinas)
 
 void enviarPagina(Pagina pag, Router* routAsociado)
 {
-    routAsociado->recibirPagina(pag);
+    routAsociado->crearPaquetes(pag);
 }
 
 //----------------------------------------------- Main-----------------------------------------------------
