@@ -345,37 +345,52 @@ private:
     Lista<int> *listaAuxNumColas = &veciConCola;
     Lista<Lista<Paquete>> listasTerminales; 
     Lista<int> veciNum; //Lista de enteros con los numeros ID de los routers vecinos
-    Lista<Paquete> paqEnEspera;
+    Cola<Paquete> paqEnEspera;
+    Paquete paqueteEspera;
     Lista<Cola<Paquete>> *listaAuxColasVecinos = &colasVecinos;
 
 public:
     Router();
     ~Router(){};
 
+    //Getters
     int getIDRouter(void){return IDRout;};
     int getCantidadMaq(void){return cantidadMaquinas;};
     int getCantidadVeci(void){return cantidadVecinos;};
     Lista<int> getVecinos(){ return veciNum;};
 
+    //Setters
     void setIDRouter(int num){IDRout = num;}
     void setNuevaMaq(void){cantidadMaquinas++;};
     void setNuevoVecino(void){cantidadVecinos++;};
 
+    //Completar atributos del Router
     int generarAnchoBanda();
     void agregarVecino(Router* proutVecino);
     void agregarMaquina(Maquina<Router>* maquina);
+
+    //Recepcion  de paginas y generacion y encolamiento de paquetes
+    //Router como generador
     void recibirPagina(Pagina pag);
     Paquete generarPaquete(int routerFinal, int maqFinal,int routActual, int numOrden, int numTot, bitset<16> IPorigen, bitset<16> IPdestino, int numPag);
     void encolarPaquete(Paquete paq);
     bool confirmar(int sigRout);
+
+    //Recepcion y distribucion de paquetes de un router vecino
+    //Router como Receptor
     void recibirPaquete(Paquete paq);
     void recibirPaqueteTerminal(Paquete paq);
     void recibirPaqueteVecino(Paquete paq);
     void ordenarPaqueteTerminal(Lista<Paquete> paquetes);
+
+    //Envio de paquetes tanto a vecinos como a maquinas terminales
+    //Router como emisor
     void enviarPaquetes();
     void enviarPaqueteVecino(Lista<Paquete> paquetes);
     void enviarPaqueteTerminal(Lista<Paquete> paquetes);
     void borrarPaquete(Paquete paq);
+
+    //Metodo auxiliar para el Administrador
     int turno(void);
 };
 
@@ -434,6 +449,8 @@ void Router::recibirPagina(Pagina pag)
 
 
         //Encolado paquetes
+        Mal porque tengo que buscar la forma que no se manden todos los paquetes de una misma pagina al mismo tiempo
+
         encolarPaquete(paquete);
     }
 }
@@ -588,6 +605,7 @@ void Router::borrarPaquete(Paquete paq)
     //Borrado de cola correspondiente
 }
 
+//Se calcula en cuantas "tandas" se enviaria el paquete si 
 int Router::turno()
 {
     //Cuanto le falta al paquete para que sea el turno de su cola para enviarse
