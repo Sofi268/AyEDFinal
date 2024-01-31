@@ -83,7 +83,7 @@ template <class T> Lista<T>* Lista<T>::resto(void)
 
 template <class T> int Lista<T>::size()
 {
-    if (this->esvacia()) return 0;
+    if (this->esVacia()) return 0;
     return 1 + this->resto()->size();
 }
 
@@ -98,7 +98,7 @@ template <class T> void Lista<T>::borrar(void)
 
 template <class T> void Lista<T>::borrarD(T d, Nodo<T>* ant)
 {
-    if (!this->esvacia()) {
+    if (!this->esVacia()) {
         if (d == this->cabeza()) {
             if (ant == NULL) {//al principio
                 this->borrar();
@@ -155,7 +155,6 @@ private:
     int numTotalPaquetes;
     bitset<16> IPorigen;
     bitset<16> IPdestino;
-    bool terminal;
     int sigRout;
     int numOrdenCola;
 
@@ -178,11 +177,8 @@ public:
 
     //Setters
     void setNuevoCamino(Lista<int> nuevoCamino){tablaDirecciones = nuevoCamino;};
-    void setTerminal(void){terminal = true;};
     void setRoutActual(int routAct){routerActual = routAct;};
     void setOrdenCola(int nuevoNum){numOrdenCola = nuevoNum;};
-
-    bool isTerminal(void){return terminal;};
 
     //Borra el primer elemento del camino
     void borrarElemCamino(void){tablaDirecciones.borrar();}; 
@@ -199,12 +195,11 @@ Paquete::Paquete(int routFnal, int maqFnal, int routActual, int numeroOrden, int
     numTotalPaquetes = numeroTotalPaquetes;
     IPorigen = IPorig;
     IPdestino = IPdest;
-    terminal = false;
     numOrdenCola = 0;
     numPag = pag;
 }
 
-//Al llegar un paquete al router, este se elimina de la lista de su camino por lo que el primer elemento del mismo va a ser el siguiente destino
+//Al llegar un paquete al routerAEnviar, este se elimina de la lista de su camino por lo que el primer elemento del mismo va a ser el siguiente destino
 int Paquete::getSigRouter()
 {   
     int sigRout = tablaDirecciones.cabeza();
@@ -287,7 +282,7 @@ public:
     void setDirecMaquina(int maq, int rout);
     void setPaginaRecibida(Lista<Paquete> paquetes);
     void setNumMaqGeneral(int numMaq){numMaqGeneral = numMaq;};
-    void setRouterAsociado(T* router){routerAsociado = router;};
+    void setRouterAsociado(T* routerAEnviar){routerAsociado = routerAEnviar;};
 
     //Creacion de una pagina
     Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag);
@@ -343,7 +338,7 @@ template<class T> int Maquina<T>::generarDirecciondeEnvio(Lista<T>* rout, int ca
     return randMaq,randRout;
 }
 
-//Busqueda del router elegido aleatoriamente y a partir de el, elige aleatoriamente una de sus maquinas aleatoria 
+//Busqueda del routerAEnviar elegido aleatoriamente y a partir de el, elige aleatoriamente una de sus maquinas aleatoria 
 template<class T> int Maquina<T>::generarMaquina(int randRout,Lista<T> *rout)
 {   
     //Recorrido de lista de routers para encontrar el aleatorio
@@ -369,7 +364,8 @@ private:
     Lista<Router*> routVecinos;
     Lista<Cola<Paquete>> colasVeciEnvios;
     Lista<int> veciConEspera; //Numeros ID de routers vecinos con colas de espera 
-    Lista<Lista<Paquete>> listasTerminales; 
+    Lista<Lista<Lista<Paquete>>> listasTerminales; //Cada maquina puede recibir paquetes finales de diferentes paginas
+    Lista<int> maqConLista; //Maquinas Finales con Listas de espera
     Lista<int> veciNum; //Lista de enteros con los numeros ID de los routers vecinos
     Lista<Cola<Paquete>> paqEnEspera;
 
@@ -401,10 +397,14 @@ public:
     bool tieneColaEspera(Lista<int> colas, int idRout, int i);
     Cola<Paquete>* buscarCola(Lista<Cola<Paquete>> colas, int idRouter,int i);
 
-    //Recepcion y distribucion de paquetes de un router vecino
+    //Recepcion y distribucion de paquetes de un routerAEnviar vecino
     //Router como receptor
+    Lista<Paquete>* buscarMaquina(Lista<Lista<Paquete>> listas, int idMaq);
+    bool tieneLista(Lista<int> listas, int idMaq, int inicio);
     void recibirPaquete(Paquete paq);
     void recibirPaqueteTerminal(Paquete paq);
+    Lista<Lista<Paquete>>* buscarMaquina(Lista<Lista<Lista<Paquete>>> listas, int idMaq,int inicio);
+    Lista<Paquete>* buscarLista(Lista<Lista<Paquete>> listas, int idMaq, int inicio);
     void recibirPaqueteVecino(Paquete paq);
     void ordenarPaqueteTerminal(Lista<Paquete> paquetes);
 
@@ -437,11 +437,11 @@ int Router::generarAnchoBanda()
 
 void Router::agregarVecino(Router* proutVecino)
 {
-    //Aniade el router a la Lista de vecinos
+    //Aniade el routerAEnviar a la Lista de vecinos
     routVecinos.add(proutVecino);
     setNuevoVecino();
 
-    //Aniade el numero de router a la lista de enteros con los numeros de los routers vecinos
+    //Aniade el numero de routerAEnviar a la lista de enteros con los numeros de los routers vecinos
     int numVeci = proutVecino->getIDRouter();
     veciNum.add(numVeci);
 
@@ -475,6 +475,9 @@ void Router::crearPaquetes(Pagina pag)
         Paquete paquete = generarPaquete(routerFinal, maqFinal,routActual, i, numTotalPaquetes, IPorigen, IPdestino, numPag);
         
         //Seteo tablaDirecciones(camino) del paquete por Djikstra 
+
+        //Encolamiento de paquetes
+        encolarPaquete(paquete);
     }
 }
 
@@ -484,7 +487,7 @@ Paquete Router::generarPaquete(int routerFinal, int maqFinal,int routActual, int
     return *paquete;
 }
 
-//Buscar cola de router correspondiente
+//Buscar cola de routerAEnviar correspondiente
 Cola<Paquete>* Router::buscarCola(Lista<Cola<Paquete>> colas, int idRouter,int i)
 {
     int id = colas.cabeza().getNumRout();
@@ -509,36 +512,41 @@ bool Router::tieneColaEspera(Lista<int> colas, int idRout, int inicio)
 
 void Router::encolarPaquete(Paquete paq) 
 {
-    int router = paq.getSigRouter();
+    int routerAEnviar = paq.getSigRouter();
     int inicio = 1;
-    bool espera = tieneColaEspera(veciConEspera, router, inicio);
+    bool espera = tieneColaEspera(veciConEspera, routerAEnviar, inicio);
     int numeroPag = paq.getNumPag();
 
-    //Caso en que todavia no hay una cola de espera de ese router
+    //Caso en que todavia no hay una cola de espera de ese routerAEnviar
     if(!espera){
-        Cola<Paquete>* pcolaVecino = buscarCola(colasVeciEnvios, router, inicio);
+
+        //Busqueda de la cola de envios del routerAEnviar vecino correspondiente
+        Cola<Paquete>* pcolaVecino = buscarCola(colasVeciEnvios, routerAEnviar, inicio);
         int ant = pcolaVecino->getIdAnt();
-        int numeroPag = paq.getNumPag();
+
         //Si es de la misma pagina que el paquete anterior se crea una cola de espera y se agrega el paquete
         if(ant == numeroPag){
-            Cola<Paquete>* nuevaColaEspera = new Cola<Paquete>(router, ant, 0);
+            Cola<Paquete>* nuevaColaEspera = new Cola<Paquete>(routerAEnviar, ant, 0);
             nuevaColaEspera->encolar(paq);
             nuevaColaEspera->setCantiPaqMas();
             paqEnEspera.add(*nuevaColaEspera);
-            veciConEspera.add(router);
+            veciConEspera.add(routerAEnviar);
         }
+
         //Si no es el de la misma pagina, simplemente se agrega a la cola de envios del vecino
         else{
-            Cola<Paquete>* colaVeci = buscarCola(colasVeciEnvios, router, inicio);
+            Cola<Paquete>* colaVeci = buscarCola(colasVeciEnvios, routerAEnviar, inicio);
             colaVeci->encolar(paq);
             colaVeci->setCantiPaqMas();
             colaVeci->setIdAnt(ant);
         }
     }
+
+    //Caso en que ya tenga una cola de espera
     else{
-        Cola<Paquete>* pcolaEspera = buscarCola(paqEnEspera, router, inicio);
+        Cola<Paquete>* pcolaEspera = buscarCola(paqEnEspera, routerAEnviar, inicio);
         int ant = pcolaEspera->getIdAnt();
-        int numeroPag = paq.getNumPag();
+
         //Si es de la misma pagina que el ultimo paquete encolado, se encola tras este en la cola de espera
         if(ant == numeroPag){
             pcolaEspera->encolar(paq);
@@ -547,7 +555,7 @@ void Router::encolarPaquete(Paquete paq)
 
         else{
             //Primero se encola el paquete nuevo
-            Cola<Paquete>* pcolaVeci = buscarCola(colasVeciEnvios, router, inicio);
+            Cola<Paquete>* pcolaVeci = buscarCola(colasVeciEnvios, routerAEnviar, inicio);
             pcolaVeci->encolar(paq);
             pcolaVeci->setCantiPaqMas();
             pcolaVeci->setIdAnt(numeroPag);
@@ -578,7 +586,6 @@ void Router::recibirPaquete(Paquete paq)
 
     //Se determina si el paquete es terminal o proutVecino
     if(paq.getRouterFinal()==IDRout){
-        paq.setTerminal();
         recibirPaqueteTerminal(paq);
     }
     else{
@@ -586,24 +593,56 @@ void Router::recibirPaquete(Paquete paq)
     }
 }
 
+//Busqueda de la lista que contiene las listas de una maquina especifica
+Lista<Lista<Paquete>>* Router::buscarMaquina(Lista<Lista<Lista<Paquete>>> listas, int idMaq,int inicio)
+{
+    int idMaqLista = listas.cabeza().cabeza().cabeza().getMaquinaFinal();
+    if(idMaqLista== idMaq) return listas.getCabeza();
+    if(inicio == listas.size()) return nullptr;
+    else{
+        inicio++;
+        buscarMaquina(*listas.resto(), idMaq, inicio);
+    }
+}
+
+Lista<Paquete>* Router::buscarLista(Lista<Lista<Paquete>> listas, int idPagina, int inicio)
+{
+    int idPag = listas.cabeza().cabeza().getNumPag();
+    if(idPagina==idPagina) return listas.getCabeza();
+    if(inicio == listas.size()) return nullptr;
+    else{
+        inicio++;
+        buscarLista(*listas.resto(), idPagina, inicio);
+    }
+}
+
+bool Router::tieneLista(Lista<int> listas, int idMaq, int inicio)
+{
+    int id = listas.cabeza();
+    if(id == idMaq) return true;
+    if(inicio == listas.size()) return false;
+    else{
+        inicio++;
+        tieneLista(*listas.resto(), idMaq, inicio);
+    }
+}
+
 void Router::recibirPaqueteTerminal(Paquete paq)
 {
-    //Aniade el paquete a la Lista Terminal correspondiente
-    Lista<Lista<Paquete>> listTerminalesAux = listasTerminales;
-    Lista<Paquete>* lisAux;
-    int numMaq;
-    //if(paq.getMaquinaFinal())
-    for(int i = 0; i < ; i++){
-        numMaq = 
-        if(paq.getMaquinaFinal()==numMaq)
+    //Busca la lista terminal correspondiente
+    int numMaq = paq.getMaquinaFinal();
+    bool tiene = tieneLista(maqConLista, numMaq, 1);
+    if(!tiene){
+        
     }
-    listaTerminal.add(paq);
-    int tamanioPag = paq.getCantiTotalPaq();
-    int tamanioActual = listaTerminal.size();
 
-    //Comprobacion si llegaron todos los paquetes
-    //En caso de que si, orden de paquetes
-    if(tamanioPag == tamanioActual) ordenarPaqueteTerminal(listaTerminal);
+//     listaTerminal.add(paq);
+//     int tamanioPag = paq.getCantiTotalPaq();
+//     int tamanioActual = listaTerminal.size();
+
+//     //Comprobacion si llegaron todos los paquetes
+//     //En caso de que si, orden de paquetes
+//     if(tamanioPag == tamanioActual) ordenarPaqueteTerminal(listaTerminal);
 }
 
 void Router::recibirPaqueteVecino(Paquete paq)
@@ -619,20 +658,20 @@ void Router::ordenarPaqueteTerminal(Lista<Paquete> paquetes)
 
 void Router::enviarPaqueteVecino(Lista<Paquete> paquetes)
 {
-    //Recorrido de lista de Maquinas asociadas hasta encontrar la correspondiente
-    Lista<Maquina<Router>> maqsAux= maqAsociadas;
-    int numMaqFNal = paquetes.cabeza().getMaquinaFinal();
-    int maq;
-    for(int i = 0; i < cantidadMaquinas; i++){
-        maq = maqsAux.cabeza().getMaquina();
-        //Una vez hallada, se envia la lista de paquetes previamente ordenados
-        if(maq==numMaqFNal){
-            maqsAux.getCabeza()->setPaginaRecibida(paquetes);
-            break;
-        }
-        maqsAux = *maqsAux.resto();
-    }
-    Cambiar los ordenes de Cola de los paquetes
+    // //Recorrido de lista de Maquinas asociadas hasta encontrar la correspondiente
+    // Lista<Maquina<Router>> maqsAux= maqAsociadas;
+    // int numMaqFNal = paquetes.cabeza().getMaquinaFinal();
+    // int maq;
+    // for(int i = 0; i < cantidadMaquinas; i++){
+    //     maq = maqsAux.cabeza().getMaquina();
+    //     //Una vez hallada, se envia la lista de paquetes previamente ordenados
+    //     if(maq==numMaqFNal){
+    //         maqsAux.getCabeza()->setPaginaRecibida(paquetes);
+    //         break;
+    //     }
+    //     maqsAux = *maqsAux.resto();
+    // }
+    // Cambiar los ordenes de Cola de los paquetes
 }
 
 void Router::enviarPaqueteTerminal(Lista<Paquete> paquetes)
@@ -742,7 +781,7 @@ void enviarPagina(Pagina pag, Router* routAsociado)
 
 int main(){
     Lista<Router> rout; //Lista de todos los routers creados
-    Lista<Maquina<Router>> maquinas; //Lista de todas las maquinas creadas, independiente del router asociado
+    Lista<Maquina<Router>> maquinas; //Lista de todas las maquinas creadas, independiente del routerAEnviar asociado
     AdminSistema administrador;
     Lista<Paquete> paquetes; //Lista de todos los paquetes creados, independiente de la maquina creadora
     int pagsCanti = rand() % 50; //Numero aleatorio de paginas generadas
@@ -755,9 +794,9 @@ int main(){
     //Creacion de los routers
 
     for(int i = 1; i < cantidadRouters; i++){
-        Router* router = new Router();
-        router->setIDRouter(i);
-        rout.add(*router);
+        Router* routerAEnviar = new Router();
+        routerAEnviar->setIDRouter(i);
+        rout.add(*routerAEnviar);
     }
     
     //Creacion de maquinas
@@ -766,20 +805,20 @@ int main(){
         int numMaq,numRout;
         numMaqGnral = i;
         int idCantMaq;
-        bool apto = false;//Comprobacion que numero de maquinas del router elegido sea menor que el limite (256)
+        bool apto = false;//Comprobacion que numero de maquinas del routerAEnviar elegido sea menor que el limite (256)
 
-        //Bucle para seleccionar un router aleatorio apto, con cantidad de maquinas disponibles 
+        //Bucle para seleccionar un routerAEnviar aleatorio apto, con cantidad de maquinas disponibles 
         while(!apto){ 
             numRout = rand() % cantidadRouters; //Eleccion de Router Aleatorio
             Router* routTentativo = buscarRouter(numRout,rout); 
-            idCantMaq = routTentativo->getCantidadMaq();//Obtencion de la cantidad de Maquinas asociada al router aleatorio obtenido
+            idCantMaq = routTentativo->getCantidadMaq();//Obtencion de la cantidad de Maquinas asociada al routerAEnviar aleatorio obtenido
             
             if(idCantMaq < cantidadMaquinas){  //Comprobacion de la cantidad de maquinas es menor a la maxima Tentativo
                 Router* routApto = routTentativo;
                 numMaq = ++idCantMaq;
                 Maquina<Router>* maquinaNueva = new Maquina<Router>(numMaq,numRout);//Creacion de la nueva maquina
-                maquinaNueva->setRouterAsociado(routApto);//Asociacion del router a la maquina
-                routApto->agregarMaquina(maquinaNueva);//Asociacion de la maquina al router
+                maquinaNueva->setRouterAsociado(routApto);//Asociacion del routerAEnviar a la maquina
+                routApto->agregarMaquina(maquinaNueva);//Asociacion de la maquina al routerAEnviar
                 maquinaNueva->setNumMaqGeneral(numMaqGnral); //Seteo de numero de maquina general
                 maquinas.add(*maquinaNueva);//Agregado de la maquina nueva a la lista de maquinas  
                 apto = true;  
@@ -788,9 +827,9 @@ int main(){
     }
 
     //Creacion de conexiones entre los Routers
-    //Dos bucles: el primero para elegir los routers vecinos y guardarlos, y el segundo para guardar en los vecinos ese router
+    //Dos bucles: el primero para elegir los routers vecinos y guardarlos, y el segundo para guardar en los vecinos ese routerAEnviar
 
-    for(int i = 1; i <= cantidadRouters; i++){ //i representa el numero del router al que se le esta designando los vecinos
+    for(int i = 1; i <= cantidadRouters; i++){ //i representa el numero del routerAEnviar al que se le esta designando los vecinos
         Router* proutActual = plistaAuxRout->getCabeza();
         Router* proutVecino;
         int idActual = proutActual->getIDRouter();
@@ -807,10 +846,10 @@ int main(){
                 proutVecino->agregarVecino(proutActual);
                 matrizAdy[idActual][idVecino] = 1; //Actualizacion de la matriz de Adyacencia
             }
-            else j--; //Caso en que el numero del router proutVecino sea su mismo numero de ID
+            else j--; //Caso en que el numero del routerAEnviar proutVecino sea su mismo numero de ID
         }
         limInferior++;
-        plistaAuxRout = plistaAuxRout->resto(); //Movimiento hacia el siguiente router
+        plistaAuxRout = plistaAuxRout->resto(); //Movimiento hacia el siguiente routerAEnviar
     }
 
     //Creacion de paginas 
@@ -827,7 +866,7 @@ int main(){
         //Generacion de la pagina
         Pagina* pagina = maquinaAleat->generarPaginaAleatoria(prout, cantidadRouters,i);
 
-        //Envio de pagina al router de la maquina correspondiente
+        //Envio de pagina al routerAEnviar de la maquina correspondiente
         Router* routAsociado = maquinaAleat->getRouterAsociado();
         enviarPagina(*pagina, routAsociado);
     }
@@ -838,5 +877,5 @@ int main(){
     //Creacion de admin del sistema 
 
     //Reconfiguracion rutas de los paquetes
-    //Bucle de envios hasta que no haya mas paquetes en ningun router
+    //Bucle de envios hasta que no haya mas paquetes en ningun routerAEnviar
 }
