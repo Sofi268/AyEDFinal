@@ -1,28 +1,68 @@
-## **Simulacion de Trafico de Internet** 
+# **Simulacion de Trafico de Internet**   
 
-### Trabajo Final Algoritmos y Estructuras de Datos 
+## Trabajo Final Algoritmos y Estructuras de Datos   
 
-Desarrollo de un programa programa que simule el trafico de datos, al *estilo* del funcionamiento del Internet en C++ con Programacion Orientada a Objetos.  
+Desarrollo de un programa programa que simule el trafico de datos, al *estilo* del funcionamiento del Internet en C++ con Programacion Orientada a Objetos.    
 
-Con este programa se pretende cumplir con la siguiente **consigna**:
+### Con este programa se pretende cumplir con la siguiente **consigna**:  
 
 
 - Existen **n maquinas** que cumplen la funcion de **routers** que se encargan de rutear los datos desde una maquina de origen hacia la maquina destino.
-- Existen otras **k maquinas**, las **terminales**, que son emisoras-receptoras de paginas. Cada una de estas maquinas esta conectada a un unico router que es el encargado de enviar/recibir las paginas hacia/desde el destino final.
+  
+- Existen otras **k maquinas**, las **terminales**, que son emisoras-receptoras de paginas. Cada una de estas maquinas esta conectada a un unico router que es el encargado de enviar/recibir las paginas hacia/desde el destino final.  
 
-Ruteo de los datos: 
+### **Ruteo de los datos**: 
 
-Cada router esta conectado a 1 o mas routers para transmitir los paquetes. 
-Cada router sabe cuales son las maquinas terminales que tiene conectadas y cuales son los routers vecinos que tiene ( es consciente de sus conexiones directas).
-Ademas cada router tienen una tabla que le indica a que router enciar los datos con un determinado destino.
+Cada router esta conectado directamente a 1 o mas routers para transmitir los paquetes de un determinado ancho de banda.   
 
-Consideraciones de recepcion de paquetes:
+Cada router sabe cuales son las maquinas terminales que tiene conectadas y cuales son los routers vecinos que tiene (es consciente de sus conexiones directas).  
 
-1. Cuando un router va recibiendo de otro router paquetes con un determinado destino hay dos opciones:
+Ademas cada router tienen una **tabla** de destinos que le indica a que router enviar los datos con un determinado destino.  
 
-  - Debe reenviarlo al router vecino correspondienteen la ruta.
-  - Si el destino final es una maquina terminal conectada directamente.
-    > Debe ir almacenando los paquetes recibidos hasta que esten todos los que correspondan a la pagina enviada.
-    > Luego se rearma la pagina y recien ahi se envia a la maquina destino.
+### **Armado de paquetes**:  
+
+Cuando un Router recibe una pagina para enviar de una de sus terminales, este la divide en n paquetes de igual tamaño y los va enviando por la ruta elegida *de a un paquete por vez.*  
+Es decir que una pagina pedida por otra terminal se divide y se envia de a segmentos.  
+
+### **Recepcion de paquetes**:    
+
+1. Cuando un router va recibiendo de otro router paquetes con un determinado destino hay dos opciones:  
+   
+   - Debe reenviarlo al router vecino correspondienteen la ruta.
+     
+   - Si el destino final es una maquina terminal conectada directamente.    
+       
+      > Debe ir almacenando los paquetes recibidos hasta que esten todos los que correspondan a la pagina enviada.
+      >
+      > > Luego se rearma la pagina y recien ahi se envia a la maquina destino.  
+
+2. Cada router tiene una cola de envios (cola de trafico) para cada router vecino, en donde van encolando los paquetes que tienen que enviarse por ese canal y que luego  envia por cada turno, todos los paquetes quee su ancho de banda le permite.  
+
+   >No se deben colocar todos los paquetes de una pagina consecutivos: deben ser intercalados con los paquetes que provengan de otra maquina, para que se vayan enviando parcialmente.
+   >
+   >>Esto evita que un envio muy pesado atore al server y los otros paquetes demoren mmucho en ser enviados.
+
+## En resumen, las **Funciones del router** son las siguientes:
+
+a. Recibir una pagina de una maquina cliente, dividirla en los paquetes que corresponda y enviarla a la cola de trafico de la ruta que corresponda.  
+
+b.  Recibir paquetes de los routers vecinos y redireccionarlos hacia el router vecino que corresponda si la direccion del paquete no es la propia del router, o bien si la direccion del paquete es la del router en cuestion, debe esperar a recibir todos los paquetes que corresponden a la pagina enviada y una vez sucedido esto, enviar la pagina a la maquina de destino.  
+
+## Tabla de Destinos:  
+
+Las direcciones de las maquinas son del tipo IP pero simplificadas. Tienen dos partes de byte cada una: 
+
+  - La primera indica el router.  
+
+  - La segunda indica la maquina terminal conectada a dicho router.  
+
+Es decir que pueden haber 256 routers con 256 maquinas cada uno.  
+
+Para computar la tabla:
+
+  - Si la direccion del paquete corresponde a la de un router vecino, hay una conexion directa, por lo cual no hay tramite.  
+
+  - Para routers que no son vecinos puede haber varias rutas alternativas, debiendo el router elegir aquella con menos carga de trafico.  
+  
 
 
