@@ -1,6 +1,6 @@
 # **Simulacion de Trafico de Internet**   
 
-## Trabajo Final Algoritmos y Estructuras de Datos   
+## Trabajo Final de Algoritmos y Estructuras de Datos   
 
 Desarrollo de un programa programa que simule el trafico de datos, al *estilo* del funcionamiento del Internet en C++ con Programacion Orientada a Objetos.    
 
@@ -42,11 +42,11 @@ Es decir que una pagina pedida por otra terminal se divide y se envia de a segme
    >
    >>Esto evita que un envio muy pesado atore al server y los otros paquetes demoren mmucho en ser enviados.
 
-## En resumen, las **Funciones del router** son las siguientes:
+### En resumen, las **Funciones del router** son las siguientes:
 
-a. Recibir una pagina de una maquina cliente, dividirla en los paquetes que corresponda y enviarla a la cola de trafico de la ruta que corresponda.  
+  a. Recibir una pagina de una maquina cliente, dividirla en los paquetes que corresponda y enviarla a la cola de trafico de la ruta que corresponda.  
 
-b.  Recibir paquetes de los routers vecinos y redireccionarlos hacia el router vecino que corresponda si la direccion del paquete no es la propia del router, o bien si la direccion del paquete es la del router en cuestion, debe esperar a recibir todos los paquetes que corresponden a la pagina enviada y una vez sucedido esto, enviar la pagina a la maquina de destino.  
+  b.  Recibir paquetes de los routers vecinos y redireccionarlos hacia el router vecino que corresponda si la direccion del paquete no es la propia del router, o bien si la direccion del paquete es la del router en cuestion, debe esperar a recibir todos los paquetes que corresponden a la pagina enviada y una vez sucedido esto, enviar la pagina a la maquina de destino.  
 
 ## Tabla de Destinos:  
 
@@ -63,6 +63,34 @@ Para computar la tabla:
   - Si la direccion del paquete corresponde a la de un router vecino, hay una conexion directa, por lo cual no hay tramite.  
 
   - Para routers que no son vecinos puede haber varias rutas alternativas, debiendo el router elegir aquella con menos carga de trafico.  
-  
+
+### **Administrador del Sistema**:  
+
+Es el encargado de recomputar las rutas optimas de todos los routers periodicamente.  
+
+Cada router envia el tamaño de la cola de espera de envios hacia cada router vecino y el administrador determina la ruta optima pasando por los routers que tengan menor trafico pendiente en relacion al ancho de banda de la conexion con ese router.  
+
+Cada router envia j paquetes por ese canal, segun el ancho de banda que el canal tenga.  
+
+#### **¿Como se determina el camino optimo?**  
+
+Lo importante es la cantidad de ciclos que un nuevo paquete debe esperar hasta ser enviado. Ademas pierde un ciclo al entrar a un router y volver a salir.  
+
+Una vez que el Administrador determina los caminos optimos, se los informa a cada router. Estos caminos son utilizados hasta que vuelven a recomputarse.  
+
+### Caso Puntual a Simular:  
+
+Se supone una pagina que se dividio en 50 paquetes. Se enviaron 20. Se recomputa el camino optimo y se cambia de ruta. Los 30 paquetes restantes van por otra ruta, que al ser tomada como optima, pueden llegar a destino antes que los primeros 20.  
+
+Constara de *1 ciclo* en que cada uno de los routers haga las tareas de recepcion y reenvio o almacenamiento de paquetes que tienen que hacer, de a uno por vez.  
+
+Cada 2 ciclos, tomara el control el administrador para recomputar los caminos optimos y volvera al computo de ciclos.  
+
+**Consideraciones importantes**:  
+
+1. Se debera utilizar numeros aleatorios para simular la generacion de paginas a ser enviadas, el destino y el tamaño de cada pagina.
+
+2. La cantidad de routers, terminales por router, las conexiones directas de los rputers y el ancho de banda entre los routers y entre cada terminal y el router asociado debera ser configurable y definido por un archivo que parametrice el sistema.
+
 
 
