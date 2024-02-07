@@ -1,4 +1,4 @@
-class Pagina{
+class Pagina {
 private:
     int maqOrigen;
     int routOrigen;
@@ -11,7 +11,7 @@ private:
 
 public:
     Pagina(void){};
-    Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina);
+    Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD);
     ~Pagina(void){};
 
     int getNumMaqOrigen(void){return maqOrigen;};
@@ -23,27 +23,28 @@ public:
     bitset<16> getIPorigen(void){return IPorigen;};
     bitset<16> getIPdestino(void){return IPdestino;};
 
-    bitset<16> setIP(int maq, int rout);
+    void imprimirPagina();
 };
 
-Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal,  int tamanio, int pagina)
+Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal,  int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD)
 {   
-    maqFinal = maquinaFinal;
-    routFinal = routFinal;
+    maqOrigen = maquinaOrigen;
     routOrigen = routerOrigen;
+    maqFinal = maquinaFinal;
+    routFinal = routerFinal;
     tamanioPagina = tamanio;
-    IPorigen = setIP(maquinaOrigen, routerOrigen);
-    IPdestino = setIP(maquinaFinal,routerFinal);
     numeroPagina = pagina;
+    IPorigen = IpO;
+    IPdestino = IpD;
 }
 
-//Creacion de pseudo direccion IP 
-bitset<16> Pagina::setIP(int maq, int rout)
-{   
-    bitset<16> IP;
-    bitset<16> a (maq);
-    bitset<16> b (rout);
-    (a<<=8);
-    IP = (a|b);
-    return IP;
+void Pagina::imprimirPagina(){
+    cout<<"Pagina numero "<<numeroPagina<<endl;
+    cout<<"Maquina Origen: "<<maqOrigen<<endl;
+    cout<<"Router Origen: "<<routOrigen<<endl;
+    cout<<"Maquina Destino: "<<maqFinal<<endl;
+    cout<<"Router Destino: "<<routFinal<<endl;
+    cout<<"Tamanio de la pagina: "<<tamanioPagina<<endl;
+    cout<<"Direccion de Origen: "<<IPorigen<<endl;
+    cout<<"Direccion de Destino: "<<IPdestino<<endl;
 }
