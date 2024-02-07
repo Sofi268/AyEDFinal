@@ -53,24 +53,29 @@ template <class T> Pagina* Terminal<T>::generarPaginaAleatoria(Lista<T>* rout,in
 template<class T> int Terminal<T>::generarTamanioAleatorio(void)
 {
     //Eleccion de 60 como tamanio maximo aleatorio
+    srand(time(nullptr));
     int tamanio = rand()% 60;
     return tamanio;
 }
 
+//Generar direccion de envio aleatorio
 template<class T> int Terminal<T>::generarDirecciondeEnvio(Lista<T>* rout, int cantidadRout)
 {
     int randMaq,randRout;
+    srand(time(nullptr));
     randRout = rand()% cantidadRout;
     randMaq = generarMaquina(randRout, rout);
     if(randMaq ==0) generarDireccionesdeEnvio(rout, cantidadRout);
     return randMaq,randRout;
 }
 
-//Busqueda del routerAEnviar elegido aleatoriamente y a partir de el, elige aleatoriamente una de sus maquinas aleatoria 
+//Busqueda del router a enviar elegido aleatoriamente 
+//Apartir de el, elige aleatoriamente una de sus maquinas aleatoria 
 template<class T> int Terminal<T>::generarMaquina(int randRout, Lista<T> *rout)
 {   
     //Recorrido de lista de routers para encontrar el aleatorio
     if(rout->cabeza().getIDRouter() == randRout){
+        srand(time(nullptr));
         int randMaq = rand()%(rout->cabeza().getCantidadMaq()); 
         return randMaq;
     }
@@ -78,6 +83,7 @@ template<class T> int Terminal<T>::generarMaquina(int randRout, Lista<T> *rout)
     //Si no es, sigue recursivamente enviando el resto de la lista
     else generarMaquina(randRout, rout->resto());
 }
+
 //Recibir pagina enviada
 template<class T> void Terminal<T>::recibirPagina(Pagina* pag)
 {
