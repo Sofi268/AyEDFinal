@@ -1,0 +1,49 @@
+class Pagina{
+private:
+    int maqOrigen;
+    int routOrigen;
+    int maqFinal;
+    int routFinal;
+    int tamanioPagina;
+    int numeroPagina;
+    bitset<16> IPorigen;
+    bitset<16> IPdestino;
+
+public:
+    Pagina(void){};
+    Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina);
+    ~Pagina(void){};
+
+    int getNumMaqOrigen(void){return maqOrigen;};
+    int getRoutOrigen(){return routOrigen;};
+    int getNumMaqFinal(void){return maqFinal;};
+    int getRoutFinal(void){return routFinal;}
+    int getTamanoPagina(void){return tamanioPagina;};
+    int getNumeroPagina(void){return numeroPagina;};
+    bitset<16> getIPorigen(void){return IPorigen;};
+    bitset<16> getIPdestino(void){return IPdestino;};
+
+    bitset<16> setIP(int maq, int rout);
+};
+
+Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal,  int tamanio, int pagina)
+{   
+    maqFinal = maquinaFinal;
+    routFinal = routFinal;
+    routOrigen = routerOrigen;
+    tamanioPagina = tamanio;
+    IPorigen = setIP(maquinaOrigen, routerOrigen);
+    IPdestino = setIP(maquinaFinal,routerFinal);
+    numeroPagina = pagina;
+}
+
+//Creacion de pseudo direccion IP 
+bitset<16> Pagina::setIP(int maq, int rout)
+{   
+    bitset<16> IP;
+    bitset<16> a(maq);
+    bitset<16> b(rout);
+    (a<<=8);
+    IP = (a&b);
+    return IP;
+}
