@@ -41,9 +41,9 @@ Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int router
 bitset<16> Pagina::setIP(int maq, int rout)
 {   
     bitset<16> IP;
-    bitset<16> a(maq);
-    bitset<16> b(rout);
+    bitset<16> a (maq);
+    bitset<16> b (rout);
     (a<<=8);
-    IP = (a&b);
+    IP = (a|b);
     return IP;
 }
