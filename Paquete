@@ -1,0 +1,58 @@
+class Paquete{
+private:
+    int maqOrigen, routOrigen, maqFinal, routFinal, routActual, tamanioPag, numeroPagina, numeroOrdenPagina, numeroOrdenCola, sigRout;
+    Lista<int> camino;
+    bitset<16> IPorigen;
+    bitset<16> IPdestino;
+
+public:
+    Paquete(void){};
+    Paquete(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal, int routerActual, int tamanioPagina, int numPagina, int numOrdenPagina, bitset<16> IPorig, bitset<16> IPdest);
+    ~Paquete(void){};
+
+    //Getters
+    int getMaquinaOrigen(void){ return maqOrigen;};
+    int getRouterOrigen(void){return routOrigen;};
+    int getMaquinaFinal(void){return maqFinal;};
+    int getRouterFinal(void){return routFinal;};
+    int getRoutActual(void){return routActual;};
+    int getCantiTotalPaq(void){return tamanioPag;};
+    int getNumPag(void){return numeroPagina;};
+    int getOrdenPagina(void){return numeroOrdenPagina;};
+    int getOrdenCola(void){return numeroOrdenCola;};
+    bitset <16> getIPorigen(void){return IPorigen;};
+    bitset <16> getIPdestino(void){return IPdestino;};
+    Lista<int> getCamino(void){return camino;};
+    int getSigRouter(void);
+
+    //Setters
+    void setNuevoCamino(Lista<int> nuevoCamino){camino = nuevoCamino;};
+    void setRoutActual(int routerAct){routActual = routerAct;};
+    void setOrdenCola(int nuevoNum){numeroOrdenCola = nuevoNum;};
+
+    //Borra el primer elemento del camino
+    void borrarElemCamino(void){camino.borrar();}; 
+
+};
+
+Paquete::Paquete(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal, int routerActual, int tamanioPagina, int numPagina, int numOrdenPagina, bitset<16> IPorig, bitset<16> IPdest)
+{
+    maqOrigen = maquinaFinal;
+    routOrigen = routerActual;
+    maqFinal = maquinaFinal;
+    routFinal = routerFinal;
+    routActual = routerActual;
+    tamanioPag = tamanioPagina;
+    numeroPagina = numPagina;
+    numeroOrdenPagina = numOrdenPagina;
+    numeroOrdenCola = 0;
+    IPorigen = IPorig;
+    IPdestino = IPdest;
+}
+
+//Al llegar un paquete al routerAEnviar, este se elimina de la lista de su camino por lo que el primer elemento del mismo va a ser el siguiente destino
+int Paquete::getSigRouter()
+{   
+    int sigRout = camino.cabeza();
+    return sigRout;
+}
