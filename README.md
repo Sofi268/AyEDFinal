@@ -86,11 +86,49 @@ Constara de *1 ciclo* en que cada uno de los routers haga las tareas de recepcio
 
 Cada 2 ciclos, tomara el control el administrador para recomputar los caminos optimos y volvera al computo de ciclos.  
 
-**Consideraciones importantes**:  
+**Consideraciones importantes**:   
 
-1. Se debera utilizar numeros aleatorios para simular la generacion de paginas a ser enviadas, el destino y el tamaño de cada pagina.
+1. Se debera utilizar numeros aleatorios para simular la generacion de paginas a ser enviadas, el destino y el tamaño de cada pagina.  
 
-2. La cantidad de routers, terminales por router, las conexiones directas de los rputers y el ancho de banda entre los routers y entre cada terminal y el router asociado debera ser configurable y definido por un archivo que parametrice el sistema.
+2. La cantidad de routers, terminales por router, las conexiones directas de los rputers y el ancho de banda entre los routers y entre cada terminal y el router asociado debera ser configurable y definido por un archivo que parametrice el sistema.  
+
+## **Solucion propuesta**:  
+
+### Clases Principales:  
+
+1. *Maquina*: ideada como una interfaz pero implementada como herencia. Ya que tanto el router como la maquina terminal son diferentes tipos de maquina, se establece un id para ambos y metodos de envio y recepcion que cada uno sobreescribira.  
+   
+2. *Router*: la clase principal, la cual hereda de maquina y expande mucho mas sus funciones. Diseñada para representar objetos que manipulen paquetes y esten en todas sus etapas tanto en la generacion como la recepcion, el envio y la convergencia al formar una pagina. Distribuyen los paquetes de la forma mas efectiva posible haciendo uso de clases suplementarias para agilizar y optimizar su ejecucion.  
+   
+3. *Terminal*: tambien hereda de Maquina. Se encarga de la generacion, envio y recepcion de paginas hacia y desde el router asociado a ella.  
+   
+4. *Pagina*: representa el objeto final que se quiere transportar mediante los routers.  
+
+5. *Paquete*: medio de transporte de las paginas a traves de su division en estos segmentos.
+
+6. *Administrador*: clase encargada de la continua actualizacion de los caminos optimos para dirigir a los paquetes en el menor tiempo hacia su destino final.
+
+### Clases Auxiliares:  
+
+1. *Envio*: clase encargada del envio de paquetes del router. Gestiona los diferentes casos posibles, su envio a los routers vecinos o a las maquinas terminales, segun sea el caso.  
+   
+2. *Gestion de Vecinos*: auxiliar para la manipulacion y cuidado de las colas tanto de espera como de trafico de los vecinos como de las colas que a ellos refieren.  
+   
+3. *Recepcion*: se encarga de la recepcion de paquetes tanto terminales como de vecinos y la redireccion de estos al camino de espera correspondiente para la posterior determinacion de envio.  
+
+4. *Computos*: calculo del tiempo de espera en las colas de trafico. Clase auxiliar para el Administrador de Sistema.  
+
+
+### Clases Extra:  
+
+Se nos proveyo el codigo de estas estructuras de datos para que sirvan como base del programa.
+
+- *Lista*: estructura de datos que almacena diferentes datos en nodos y los une por medio de punteros.  
+  
+- *Cola*: hereda de lista pero la transforma en una estructura FIFO.  
+
+
+### Diagrama de Clases:
 
 
 
