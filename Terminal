@@ -2,19 +2,19 @@ template <class T> class Terminal  {
 private:
     int numMaquina;
     int numRouter;
-    T* routerAsociado;
+    T routerAsociado;
     bitset <16> direcMaquina;
     Pagina* paginaEnviar;
     Lista<Pagina*>* paginasRecibidas;
 
 public:
     Terminal(void){};
-    Terminal(int numeroMaquina, int numeroROuter, T* router);
+    Terminal(int numeroMaquina, int numeroROuter, T router);
 
     //Getters
     int getNumeroMaq(void){return numMaquina;};
     int getNumeroRouter(void){return numRouter;};
-    T* getRouterAsociado(void){return routerAsociado;};
+    T getRouterAsociado(void){return routerAsociado;};
     bitset<16> getDirecMaquina(void){return direcMaquina;};
 
     bitset<16> setDireccion(int maq,  int rout);
@@ -22,13 +22,13 @@ public:
     Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag);
     int generarTamanioAleatorio(void);
     int generarDirecciondeEnvio(Lista<T>* rout, int cantidadRout);
-    int generarMaquina(int randRout, Lista<T> *rout);
+    int generarMaquina(int randRout, Lista<T>* rout);
     void enviarPagina(Lista<T>* rout,int cantidadRout, int numPag);
     void recibirPagina(Pagina* pag);
     void imprimirRecepcion(Pagina* pag);
 };
 
-template <class T> Terminal<T>::Terminal(int numeroMaquina, int numeroRouter, T* router)
+template <class T> Terminal<T>::Terminal(int numeroMaquina, int numeroRouter, T router)
 {
     numMaquina = numeroMaquina;
     numRouter = numeroRouter;
