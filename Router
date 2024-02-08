@@ -205,31 +205,46 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
     int siguienteRout = paquete->getSigRouter();
     if(veciTieneEspera(siguienteRout)){//Si existe una cola de espera para el trafico del router
         if(pertenece(paquete->getNumPag(), siguienteRout)){//Si pertenece a esa cola de espera
-            buscarCola(siguienteRout, colasEspera)->encolar(paquete);//Se añade
+            Cola<Paquete*>* colaEsp= buscarCola(siguienteRout, colasEspera);//Se añade
+            colaEsp->encolar(paquete);
+            colaEsp->setCantiPaqMas();
         }
         else{
             Cola<Paquete*>* colaTraf = buscarCola(siguienteRout, colasTrafico);
             colaTraf->encolar(paquete);
+            colaTraf->setCantiPaqMas();
             Paquete* paq = buscarCola(siguienteRout, colasEspera)->tope(); 
             colaTraf->encolar(paq); //Se encola tambien un paquete de la cola de espera
-            buscarCola(siguienteRout, colasEspera)->desencolar(); //Se desencola de la lista de espera
+            colaTraf->setCantiPaqMas();
+            Cola<Paquete*>* colaEspe = buscarCola(siguienteRout, colasEspera); //Se desencola de la lista de espera
+            colaEspe->desencolar();
+            if(colaEspe->esVacia()){
+                int numRouter = colaEspe->getNumRout();
+                colasEspera->borrarDato(colaEspe);
+                veciConEspera->borrarDato(numRouter);
+            }
         }
     }
     else{
         if(veciTieneTrafico(siguienteRout)){
             int ant = buscarCola(siguienteRout, colasTrafico)->getIdAnt();
+
             if(paquete->getNumPag()==ant){
-                Cola<Paquete*>* colaEspera = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),0);
+                int anchoBanda = buscarRouter(siguienteRout, vecinos)->getAnchoBanda();
+                Cola<Paquete*>* colaEspera = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),1,anchoBanda);
                 colaEspera->encolar(paquete);
                 colasEspera->add(colaEspera);
                 veciConEspera->add(siguienteRout);
             }
             else{
-                buscarCola(siguienteRout, colasTrafico)->encolar(paquete);
+                Cola<Paquete*>* colaTraf = buscarCola(siguienteRout, colasTrafico);
+                colaTraf->encolar(paquete);
+                colaTraf->setCantiPaqMas();
             }
         }
         else{
-            Cola<Paquete*>* colaTrafico = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),0);
+            int anchoDeBanda = buscarRouter(siguienteRout,vecinos)->getAnchoBanda();
+            Cola<Paquete*>* colaTrafico = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),1, anchoDeBanda);
             colaTrafico->encolar(paquete);
             colasTrafico->add(colaTrafico);
             veciConColaTrafico->add(siguienteRout);
@@ -238,8 +253,31 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
 }
 
 void Router::ciclo()
-{
+{   
+    Cola<Paquete*>* colaAux;
+    Lista<Cola<Paquete*>*>* listaColasAux = colasTrafico;
 
+    //Recorre la Lista
+    for(int i = 0; i< colasTrafico->size(); i++){
+        colaAux = listaColasAux->cabeza();
+
+        //Recorre la cola
+        for(int j = 0; j<colaAux->getAnchoDeBanda(); j++){
+            Paquete* paquete= colaAux->tope();
+            enviarPaqueteVecino(paquete);
+            colaAux->desencolar();
+            colaAux->setCantiPaqMenos();
+
+            //Caso en que quede vacia la cola de Espera
+            if(colaAux->esVacia()){
+                int numRout = colaAux->getNumRout();
+                colasTrafico->borrarDato(colaAux);
+                veciConColaTrafico->borrarDato(numRout);
+                break;
+            }
+        }
+        listaColasAux = listaColasAux->resto();
+    }
 }
 
 bool Router::pertenece(int numPag, int router)
@@ -266,5 +304,6 @@ bool Router::veciTieneTrafico(int ID)
 
 void Router::enviarPaqueteVecino(Paquete* paquete)
 {
-
+    int routDestino = paquete->getSigRouter();
+    buscarRouter(routDestino, vecinos)->recibirPaquete(paquete);
 }
