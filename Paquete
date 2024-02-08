@@ -1,4 +1,4 @@
-class Paquete{
+class Paquete {
 private:
     int maqOrigen, routOrigen, maqFinal, routFinal, routActual, tamanioPag, numeroPagina, numeroOrdenPagina, numeroOrdenCola, sigRout;
     Lista<int> camino;
@@ -37,7 +37,7 @@ public:
 
 Paquete::Paquete(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal, int routerActual, int tamanioPagina, int numPagina, int numOrdenPagina, bitset<16> IPorig, bitset<16> IPdest)
 {
-    maqOrigen = maquinaFinal;
+    maqOrigen = maquinaOrigen;
     routOrigen = routerActual;
     maqFinal = maquinaFinal;
     routFinal = routerFinal;
