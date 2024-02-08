@@ -1,0 +1,92 @@
+class Router {
+private:
+    int ID;
+    int anchoBanda;
+    int cantidadVecinos;
+    int cantidadTerminales;
+    Lista<Router*>* vecinos;
+    Lista<Terminal<Router*>*>* terminales;
+    Lista<Cola<Paquete*>*>* colasTrafico;
+    Lista<Cola<Paquete*>*>* colasEspera;
+    Lista<Lista<Lista<Paquete*>*>*>* listasTerminales;
+    Lista<int>* numVecinos;
+    Envio<Router*>* envio;
+    GestionVecinos<Paquete*>* gestionVecinos;
+    Camino<Router>* camino;
+
+public:
+    Router(void){};
+    Router(int id);
+    ~Router(void){};
+
+    //Gettters
+    int getID(void){return ID;};
+    int getAnchoBanda(void){return anchoBanda;};
+    int getCantidadVecinos(void){return cantidadVecinos;};
+    int getCantidadTerminales(void){return cantidadTerminales;};
+    Lista<Router*>* getVecinos(void){return vecinos;};
+    Lista<Terminal<Router*>*>* getTerminales(void){return terminales;};
+    Lista<Cola<Paquete*>*>* getColasEspera(void){return colasEspera;};
+    Lista<Cola<Paquete*>*>* getColasTrafico(void){return colasTrafico;};
+    Lista<Lista<Lista<Paquete*>*>*>* getListasTerminales(void){return listasTerminales;};
+    Lista<int>* getNumVecinos(void){return numVecinos;};
+
+    //Recibir Pagina y crear Paquetes
+    void recibirPagina(Pagina* pagina);
+    void armadoDePaquetes(Pagina* pagina);
+    void setCamino(Paquete* paquete);
+    void enviarPaquete(Paquete* paquete);
+
+    //Reconstruccion y envio de pagina
+    void reconstruirPagina(Lista<Paquete*>* paquetes);
+    Lista<Paquete*>* ordenarPaquetes(Lista<Paquete*>* paquetes);
+    void enviarPagina(Pagina* pagina);
+
+    //Recepcion de Paquetes y reenvio
+    void recibirPaquete(Paquete* paquete); //Uso gestion de vecinos
+    void ciclo();
+    bool comprobarPaqueteCola(Paquete* paquete);
+    void enviarPaqueteVecino(Paquete* paquete);
+
+};
+
+Router::Router(int id)
+{
+    ID = id;
+    cantidadVecinos = 0;
+    cantidadTerminales = 0;
+    vecinos = new Lista<Router*>();
+    terminales = new Lista<Terminal<Router*>*>();
+    colasTrafico = new Lista<Cola<Paquete*>*>();
+    colasEspera = new Lista<Cola<Paquete*>*>();
+    listasTerminales = new Lista<Lista<Lista<Paquete*>*>*>();
+    numVecinos = new Lista<int>();
+    envio = new Envio<Router*>(vecinos, terminales);
+    gestionVecinos = new GestionVecinos<Paquete*>(colasEspera, colasTrafico);
+    camino = new Camino<Router>();
+}
+
+void Router::recibirPagina(Pagina* pagina)
+{
+    armadoDePaquetes(pagina);
+}
+
+void Router::armadoDePaquetes(Pagina* pagina)
+{
+    int cantidadPaquetes = pagina->getTamanoPagina();
+    for(int i= 0; i<cantidadPaquetes; i++){
+        Paquete* paquete = new Paquete(pagina->getNumMaqOrigen(),pagina->getRoutOrigen(), pagina->getNumMaqFinal(), pagina->getRoutFinal(), ID, pagina->getTamanoPagina(), pagina->getNumeroPagina(), i+1, pagina->getIPorigen(),pagina->getIPdestino());
+        setCamino(paquete);
+        enviarPaquete(paquete);
+    }
+}
+
+void Router::setCamino(Paquete* paquete)
+{
+
+}
+
+void Router::enviarPaquete(Paquete* paquete)
+{
+    envio->enviarDirecto(paquete);
+}
