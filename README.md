@@ -113,10 +113,10 @@ Cada 2 ciclos, tomara el control el administrador para recomputar los caminos op
 1. *Envio*: clase encargada del envio de paquetes del router. Gestiona los diferentes casos posibles, su envio a los routers vecinos o a las maquinas terminales, segun sea el caso.  
    
 2. *Gestion de Vecinos*: auxiliar para la manipulacion y cuidado de las colas tanto de espera como de trafico de los vecinos como de las colas que a ellos refieren.  
-   
-3. *Recepcion*: se encarga de la recepcion de paquetes tanto terminales como de vecinos y la redireccion de estos al camino de espera correspondiente para la posterior determinacion de envio.  
 
-4. *Computos*: calculo del tiempo de espera en las colas de trafico. Clase auxiliar para el Administrador de Sistema.  
+3. *Computos*: calculo del tiempo de espera en las colas de trafico. Clase auxiliar para el Administrador de Sistema.
+
+4. *Camnio*: establece el camino optimo para que cada paquete llegue a su destino en el menor tiempo.
 
 
 ### Clases Extra:  
