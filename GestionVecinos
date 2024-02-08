@@ -1,0 +1,17 @@
+template <class T> class GestionVecinos{
+    private:
+        Lista<Cola<T>*>* colasRoutEspera;
+        Lista<Cola<T>*>* colasRoutTrafico;
+
+    public:
+        GestionVecinos(void){};
+        GestionVecinos(Lista<Cola<T>*>* colaEsp, Lista<Cola<T>*>* colaTraf);
+        ~GestionVecinos(void){};
+
+};
+
+template <class T> GestionVecinos<T>::GestionVecinos(Lista<Cola<T>*>* colaEsp, Lista<Cola<T>*>* colaTraf)
+{
+    colasRoutEspera = colaEsp;
+    colasRoutTrafico = colaTraf;
+}
