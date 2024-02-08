@@ -1,0 +1,28 @@
+template <class T> class Cola :public Lista<T> {
+private:
+    int numRouter;
+    int idAnterior; //Pagina a la que pertenece el ultimo elemento de la cola
+    int numOrden; //Cantidad de elementos que tiene la cola
+public:
+    Cola(void) { Lista<T>(); };
+    Cola(int numRout, int idAnt, int numOrden);
+    ~Cola(void){};
+    int getNumRout(void){return numRouter;};
+    int getIdAnt(void){return idAnterior;};
+    int getNumOrden(void){return numOrden;};
+    void setIdAnt(int ant){idAnterior = ant;}
+    void setCantiPaqMas(void){numOrden++;};
+    void setCantiPaqMenos(void){numOrden--;};
+    T tope(void) { return this->last(); };
+    bool colavacia(void) { return this->esVacia(); };
+    void encolar(T a) { this->add(a); };
+    void desencolar(void) { this->borrarLast(); };
+    T ultimo(void) { return this->cabeza(); };
+};
+
+template <class T> Cola<T>::Cola(int numRout, int idAnt, int numOrdenCola)
+{
+    numRouter = numRout;
+    idAnterior = idAnt;
+    numOrden = numOrdenCola;
+}
