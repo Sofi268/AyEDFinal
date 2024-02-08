@@ -1,4 +1,4 @@
-class Router {
+class Router{
 private:
     int ID;
     int anchoBanda;
@@ -10,9 +10,8 @@ private:
     Lista<Cola<Paquete*>*>* colasEspera;
     Lista<Lista<Lista<Paquete*>*>*>* listasTerminales;
     Lista<int>* numVecinos;
-    Envio<Router*>* envio;
-    GestionVecinos<Paquete*>* gestionVecinos;
-    Camino<Router>* camino;
+    GestionVecinos* gestionVecinos;
+    Camino<Router*>* camino;
 
 public:
     Router(void){};
@@ -31,19 +30,29 @@ public:
     Lista<Lista<Lista<Paquete*>*>*>* getListasTerminales(void){return listasTerminales;};
     Lista<int>* getNumVecinos(void){return numVecinos;};
 
+    //Setters
+    void setNuevoVecino(Router* vecino);
+    void setNuevaTerminal(Terminal<Router*>* terminal);
+
+    //Busqueda
+    Router* buscarRouter(int ID,Lista<Router*>* vecinos);
+    Terminal<Router*>* buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales);
+
     //Recibir Pagina y crear Paquetes
     void recibirPagina(Pagina* pagina);
     void armadoDePaquetes(Pagina* pagina);
     void setCamino(Paquete* paquete);
-    void enviarPaquete(Paquete* paquete);
+    void enviarDirecto(Paquete* paquete);
 
     //Reconstruccion y envio de pagina
+    void recibirPaqueteFinal(Paquete* paquete);
     void reconstruirPagina(Lista<Paquete*>* paquetes);
     Lista<Paquete*>* ordenarPaquetes(Lista<Paquete*>* paquetes);
     void enviarPagina(Pagina* pagina);
 
     //Recepcion de Paquetes y reenvio
-    void recibirPaquete(Paquete* paquete); //Uso gestion de vecinos
+    void recibirPaquete(Paquete* paquete); 
+    void recibirPaqueteVecino(Paquete* paquete); //Uso gestion de vecinos
     void ciclo();
     bool comprobarPaqueteCola(Paquete* paquete);
     void enviarPaqueteVecino(Paquete* paquete);
@@ -61,9 +70,38 @@ Router::Router(int id)
     colasEspera = new Lista<Cola<Paquete*>*>();
     listasTerminales = new Lista<Lista<Lista<Paquete*>*>*>();
     numVecinos = new Lista<int>();
-    envio = new Envio<Router*>(vecinos, terminales);
-    gestionVecinos = new GestionVecinos<Paquete*>(colasEspera, colasTrafico);
-    camino = new Camino<Router>();
+    gestionVecinos = new GestionVecinos(colasEspera, colasTrafico);
+    camino = new Camino<Router*>();
+}
+
+void Router::setNuevoVecino(Router* vecino)
+{
+    vecinos->add(vecino);
+    numVecinos->add(vecino->getID());
+    cantidadVecinos++;
+}
+
+void Router::setNuevaTerminal(Terminal<Router*>* terminal)
+{
+    terminales->add(terminal);
+    cantidadTerminales++;
+}
+
+Router* Router::buscarRouter(int ID, Lista<Router*>* vecinos)
+{   
+    if(vecinos->cabeza()->getID() == ID){
+        return vecinos->cabeza();
+    }
+    if(vecinos->esVacia()) return nullptr;
+    else return buscarRouter(ID, vecinos->resto());
+}
+
+Terminal<Router*>* Router::buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales)
+{
+    if(terminales->cabeza()->getNumeroMaq() == ID){
+        return terminales->cabeza();
+    }
+    else return buscarTerminal(ID, terminales->resto());
 }
 
 void Router::recibirPagina(Pagina* pagina)
@@ -77,16 +115,75 @@ void Router::armadoDePaquetes(Pagina* pagina)
     for(int i= 0; i<cantidadPaquetes; i++){
         Paquete* paquete = new Paquete(pagina->getNumMaqOrigen(),pagina->getRoutOrigen(), pagina->getNumMaqFinal(), pagina->getRoutFinal(), ID, pagina->getTamanoPagina(), pagina->getNumeroPagina(), i+1, pagina->getIPorigen(),pagina->getIPdestino());
         setCamino(paquete);
-        enviarPaquete(paquete);
+        enviarDirecto(paquete);
     }
 }
 
 void Router::setCamino(Paquete* paquete)
 {
+    camino->setCamino(paquete);
+}
+
+void Router::enviarDirecto(Paquete* paquete)
+{
+    int sigRouter = paquete->getSigRouter();
+    buscarRouter(sigRouter, vecinos)->recibirPaquete(paquete);
+}
+
+// void Router::reconstruirPagina(Lista<Paquete*>* paquetes)
+// {
+//     Paquete* paquetesOrdenados[paquetes->size()] = ordenarPaquetes(paquetes);
+//     Paquete* paqAux = paquetesOrdenados;
+//     Pagina* pagina = new Pagina(paqAux->getMaquinaOrigen(), paqAux->getRouterOrigen(), paqAux->getMaquinaFinal(),paqAux->getRouterFinal(),paqAux->getCantiTotalPaq(),paqAux->getNumPag(),paqAux->getIPorigen(), paqAux->getIPdestino());
+//     enviarPagina(pagina);
+// }
+
+// Paquete*[] Router::ordenarPaquetes(Lista<Paquete*>* paquetes)
+// {
+//     Paquete* arregloPaquetes[paquetes->size()];
+//     for(int i=0 ; i<paquetes->size(); i++){
+
+//     }
+// }
+
+void Router::enviarPagina(Pagina* pagina)
+{
+    int maqDestino = pagina->getNumMaqFinal();
+    buscarTerminal(maqDestino, terminales)->recibirPagina(pagina);
+}
+
+void Router::recibirPaquete(Paquete* paquete)
+{
+    paquete->borrarElemCamino();
+    if(paquete->getRouterFinal()==ID){
+        recibirPaqueteFinal(paquete);
+    }
+    else recibirPaqueteVecino(paquete);
+}
+
+void Router::recibirPaqueteFinal(Paquete* paquete)
+{
 
 }
 
-void Router::enviarPaquete(Paquete* paquete)
+void Router::recibirPaqueteVecino(Paquete* paquete)
 {
-    envio->enviarDirecto(paquete);
+    if(comprobarPaqueteCola(paquete)){
+
+    }
+}
+
+void Router::ciclo()
+{
+
+}
+
+bool Router::comprobarPaqueteCola(Paquete* paquete)
+{
+
+}
+
+void Router::enviarPaqueteVecino(Paquete* paquete)
+{
+
 }
