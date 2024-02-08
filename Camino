@@ -1,0 +1,14 @@
+template<class T> class Camino{
+private:
+    Lista<T*>* routers;
+
+public:
+    Camino(void){};
+    Camino(Lista<T*>* routs);
+    ~Camino(void){}
+};
+
+template<class T> Camino<T>::Camino(Lista<T*>* routs)
+{
+    routers = routs;
+}
