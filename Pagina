@@ -14,6 +14,7 @@ public:
     Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD);
     ~Pagina(void){};
 
+    //Getters
     int getNumMaqOrigen(void){return maqOrigen;};
     int getRoutOrigen(){return routOrigen;};
     int getNumMaqFinal(void){return maqFinal;};
@@ -38,7 +39,8 @@ Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int router
     IPdestino = IpD;
 }
 
-void Pagina::imprimirPagina(){
+void Pagina::imprimirPagina()
+{
     cout<<"Pagina numero "<<numeroPagina<<endl;
     cout<<"Maquina Origen: "<<maqOrigen<<endl;
     cout<<"Router Origen: "<<routOrigen<<endl;
