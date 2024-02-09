@@ -831,8 +831,9 @@ private:
     Router* proximo;
     int sigRouter;
     Lista<Router*>* routers;
-    Lista<int>* caminoAux;
-    int matriz[cantidadRouters][cantidadRouters];
+    Lista<int> caminoAux;
+    int *matriz[cantidadRouters][cantidadRouters];
+    Lista<int> camino;
 
 public:
     Camino(void){};
@@ -846,27 +847,31 @@ public:
 
 Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Paquete* paquete,Router* routBase, Lista<Router*>* rout)
 {
-    matriz = matrizAdy;
+    matriz = &matrizAdy;
     paq = paquete;
     basePartida = routBase;
     routers = rout;
     caminoAux = paquete->getCamino();
     proximo = basePartida;
     if(caminoAux.size()>1){
-        sigRouter = caminoAux->cabeza();
+        sigRouter = caminoAux.cabeza();
         setCamino(paquete);
     }
+    else  sigRouter = NULL;
 }
 
-int getTurno(Router* prox)
-{
-    int numTurno = prox->turno(sigRouter);
-    return numTurno;
+int Camino::getTurno(Router* prox)
+{   
+    if(sigRouter!=NULL){
+        int numTurno = prox->turno(sigRouter);
+        return numTurno;
+    }
+    return NULL;
 }
 
-void setProximo(int ID){
-    proximo = buscarRouter(ID, rout);
-    sigRouter = caminoAux->cabeza();
+void Camino::setProximo(int ID){
+    proximo = buscarRouter(ID, routers);
+    sigRouter = caminoAux.cabeza();
 }
 
 void Camino::setCamino(Paquete* paquete)
@@ -879,14 +884,15 @@ class Administrador{
 private:
     Lista<Paquete*>* listaPaquetes;
     Lista<Paquete*>* listaAux;
-    Lista<Router*>* routers
-    int matrizAdyacencia[cantidadRouters][cantidadRouters]
+    Lista<Router*>* routers;
+    int matrizAdyacencia[cantidadRouters][cantidadRouters];
+    
 public: 
     Administrador(void){};
     Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,int matrizAdy[cantidadRouters][cantidadRouters]);
     ~Administrador(void){};
     
-    resetearCaminos();
+    void resetearCaminos();
 };
 
 Administrador::Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,int matrizAdy[cantidadRouters][cantidadRouters])
@@ -896,16 +902,16 @@ Administrador::Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,in
     routers = routs;
 }
 
-void resetearCaminos()
+void Administrador::resetearCaminos()
 {   
     listaAux = listaPaquetes;
     
     for(int i=0; listaPaquetes->size(); i++){
         Paquete* paquete = listaAux->cabeza();
-        int sigRout = paquete->getSigRout();
+        int sigRout = paquete->getSigRouter();
         Router* routBase = buscarRouter(sigRout, routers);
         Camino* camino = new Camino(matrizAdyacencia,paquete, routBase, routers);
-        listaAux->borrar()
+        listaAux->borrar();
     }
 }
 //----------------------------------------------------------Main-------------------------------------------------------------
@@ -1001,9 +1007,9 @@ int main(){
         listaRecibida = router->getListaAEnviar();
         for(int j = 0; j<listaRecibida->size(); j++){
             Paquete* paquete = listaRecibida->cabeza();
-            int sigRouter = paquete->getSigRout();
+            int sigRouter = paquete->getSigRouter();
             Router* routBase = buscarRouter(sigRouter, rout);
-            Camino* camino = new Camino(paquete, rout, routBase);
+            Camino* camino = new Camino(matrizAdy, paquete,routBase,rout);
             listaAEnviar->add(paquete);
             listaRecibida->borrar();
         }
@@ -1017,7 +1023,7 @@ int main(){
     int ciclos = 10;
     int dosCiclos = 0 ;
     for(int i = 0; i<ciclos; i++){
-        Lista<Router*> routsAux;
+        Lista<Router*>* routsAux;
         
         if(dosCiclos>2){
             administrador->resetearCaminos();
