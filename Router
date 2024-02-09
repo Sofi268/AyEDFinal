@@ -48,6 +48,8 @@ public:
     void armadoDePaquetes(Pagina* pagina);
     void setCamino(Paquete* paquete);
     void enviarDirecto(Paquete* paquete);
+    void addOrdenado(Paquete* paquete, Lista<Paquete*>* listaTerminal);
+    Lista<Paquete*>* armadoLista(Lista<Paquete*>* listaTerminal, int numIndice, Paquete* paquete);
 
     //Reconstruccion y envio de pagina
     void recibirPaqueteFinal(Paquete* paquete);
@@ -160,21 +162,12 @@ void Router::enviarDirecto(Paquete* paquete)
     buscarRouter(sigRouter, vecinos)->recibirPaquete(paquete);
 }
 
-// void Router::reconstruirPagina(Lista<Paquete*>* paquetes)
-// {
-//     Paquete* paquetesOrdenados[paquetes->size()] = ordenarPaquetes(paquetes);
-//     Paquete* paqAux = paquetesOrdenados;
-//     Pagina* pagina = new Pagina(paqAux->getMaquinaOrigen(), paqAux->getRouterOrigen(), paqAux->getMaquinaFinal(),paqAux->getRouterFinal(),paqAux->getCantiTotalPaq(),paqAux->getNumPag(),paqAux->getIPorigen(), paqAux->getIPdestino());
-//     enviarPagina(pagina);
-// }
-
-// Paquete*[] Router::ordenarPaquetes(Lista<Paquete*>* paquetes)
-// {
-//     Paquete* arregloPaquetes[paquetes->size()];
-//     for(int i=0 ; i<paquetes->size(); i++){
-
-//     }
-// }
+void Router::reconstruirPagina(Lista<Paquete*>* paquetes)
+{
+    Paquete* paqAux = paquetes->cabeza();
+    Pagina* pagina = new Pagina(paqAux->getMaquinaOrigen(), paqAux->getRouterOrigen(), paqAux->getMaquinaFinal(),paqAux->getRouterFinal(),paqAux->getCantiTotalPaq(),paqAux->getNumPag(),paqAux->getIPorigen(), paqAux->getIPdestino());
+    enviarPagina(pagina);
+}
 
 void Router::enviarPagina(Pagina* pagina)
 {
@@ -197,7 +190,45 @@ void Router::recibirPaqueteFinal(Paquete* paquete)
     int cantiTotalPaquetes = paquete->getCantiTotalPaq();
     int numPagina = paquete->getNumPag();
     Lista<Paquete*>* listaMaquina = buscarLista(maqTerminal, listasTerminales,numPagina);
+    addOrdenado(paquete, listaMaquina);
     if(listaMaquina->size()==cantiTotalPaquetes)reconstruirPagina(listaMaquina);
+
+}
+
+void Router::addOrdenado(Paquete* paquete, Lista<Paquete*>* listaTerminal)
+{   
+    if (listaTerminal->esVacia()) {//el primero
+        listaTerminal->add(paquete);
+    }
+
+    if(paquete->getOrdenPagina()>listaTerminal->last()->getOrdenPagina()){//el ultimo
+        Lista<Paquete*>* paqueteAlFinal = new Lista<Paquete*>();
+        paqueteAlFinal->add(paquete);
+        listaTerminal->concat(paqueteAlFinal);
+    }
+    
+    else{
+        Lista<Paquete*>* listaAux = listaTerminal;
+        for(int i = 0; i<listaAux->size() ; i++){
+            if(listaAux->cabeza()->getOrdenPagina()>paquete->getOrdenPagina()){//entre Medio
+                armadoLista(listaTerminal, i, paquete);
+            }
+            else listaAux = listaAux->resto();
+        }
+    }
+}
+
+Lista<Paquete*>* Router::armadoLista(Lista<Paquete*>* listaTerminal, int numIndice, Paquete* paquete)
+{
+    Lista<Paquete*>* listaAux1 = listaTerminal;
+    listaAux1->tomar(numIndice);
+    Lista<Paquete*>* listaAux2 = listaTerminal;
+    for(int j = 0; j<numIndice; j++){
+        listaAux2->borrar();
+    }
+    listaAux2->add(paquete);
+    listaAux1->concat(listaAux2);
+    return listaAux1;
 }
 
 void Router::recibirPaqueteVecino(Paquete* paquete)
