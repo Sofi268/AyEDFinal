@@ -127,6 +127,7 @@ Lista<Paquete*>* Router::buscarLista(int ID, Lista<Lista<Lista<Paquete*>*>*>* li
         }
     }
     else return buscarLista(ID, listasTerminales->resto(), numeroPagina); //Pasa a la siguiente maquina
+    return nullptr;
 }
 
 Cola<Paquete*>* Router::buscarCola(int ID, Lista<Cola<Paquete*>*>* colas)
