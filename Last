@@ -880,15 +880,18 @@ private:
     Lista<Paquete*>* listaPaquetes;
     Lista<Paquete*>* listaAux;
     Lista<Router*>* routers
+    int matrizAdyacencia[cantidadRouters][cantidadRouters]
 public: 
     Administrador(void){};
-    Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs){listaPaquetes = paquetes;};
+    Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,int matrizAdy[cantidadRouters][cantidadRouters]);
     ~Administrador(void){};
     
     resetearCaminos();
 };
-Administrador::Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs)
+
+Administrador::Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,int matrizAdy[cantidadRouters][cantidadRouters])
 {
+    matrizAdyacencia = matrizAdy;
     listaPaquetes = paquetes;
     routers = routs;
 }
@@ -901,7 +904,7 @@ void resetearCaminos()
         Paquete* paquete = listaAux->cabeza();
         int sigRout = paquete->getSigRout();
         Router* routBase = buscarRouter(sigRout, routers);
-        Camino* camino = new Camino(paquete, routBase, routers);
+        Camino* camino = new Camino(matrizAdyacencia,paquete, routBase, routers);
         listaAux->borrar()
     }
 }
@@ -913,7 +916,6 @@ int main(){
     int pagsCanti = rand() % 50; //Numero aleatorio de paginas generadas
     int baseCantidadVeci = 1; //Minimo de cantidad de vecinos por router
     int limInferior = 0;
-    Administrador administrador;
     fill(*matrizAdy, *matrizAdy + cantidadRouters*cantidadRouters, INFI); //Inicializo la matriz de adyacencia con todos los nodos desconectados
     Lista<Paquete*>* listaVacia = new Lista<Paquete*>();
     Lista<Paquete*>* listaAEnviar = new Lista<Paquete*>();
@@ -1008,6 +1010,27 @@ int main(){
         router->recibirListaConCaminos(listaRecibida);
         router->vaciarLista();
         listaAEnviar = listaVacia;
+    }
+    
+    //Se inician los ciclos 
+    Administrador* administrador= new Administrador(paquetes, rout,matrizAdy);
+    int ciclos = 10;
+    int dosCiclos = 0 ;
+    for(int i = 0; i<ciclos; i++){
+        Lista<Router*> routsAux;
+        
+        if(dosCiclos>2){
+            administrador->resetearCaminos();
+            dosCiclos = 0;
+        }
+        
+        for(int j = 0; j<rout->size(); j++){
+            Router* auxRout = routsAux->cabeza();
+            auxRout->ciclo();
+            routsAux->borrar();
+        }
+        
+        dosCiclos++;
     }
 
     cout<<"Hello World";
