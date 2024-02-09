@@ -825,31 +825,86 @@ Terminal<Router*>* buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales)
 //---------------------------------------------------------Camino-----------------------------------------------------------
 class Camino{
 private:
-    Lista<T>* routers;
+    bool ultimoRouter;
+    Paquete* paq;
+    Router* basePartida;
+    Router* proximo;
+    int sigRouter;
+    Lista<Router*>* routers;
+    Lista<int>* caminoAux;
+    int matriz[cantidadRouters][cantidadRouters];
 
 public:
     Camino(void){};
-    Camino(Lista<>* routs);
-    ~Camino(void){}
-    //int[] camino();
+    Camino(int matrizAdy[cantidadRouters][cantidadRouters], Paquete* paquete,Router* routBase, Lista<Router*>* rout);
+    ~Camino(void){};
+    
+    int getTurno(Router* routerProx);
+    void setProximo(int ID);
     void setCamino(Paquete* paquete);
 };
 
-Camino::Camino(Lista<>* routs)
+Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Paquete* paquete,Router* routBase, Lista<Router*>* rout)
 {
-    routers = routs;
+    matriz = matrizAdy;
+    paq = paquete;
+    basePartida = routBase;
+    routers = rout;
+    caminoAux = paquete->getCamino();
+    proximo = basePartida;
+    if(caminoAux.size()>1){
+        sigRouter = caminoAux->cabeza();
+        setCamino(paquete);
+    }
 }
 
-template <class T> void Camino<T>::setCamino(Paquete* paquete)
+int getTurno(Router* prox)
+{
+    int numTurno = prox->turno(sigRouter);
+    return numTurno;
+}
+
+void setProximo(int ID){
+    proximo = buscarRouter(ID, rout);
+    sigRouter = caminoAux->cabeza();
+}
+
+void Camino::setCamino(Paquete* paquete)
 {
 
 }
 
 //----------------------------------------------------------Administrador-------------------------------------------------------
 class Administrador{
-
+private:
+    Lista<Paquete*>* listaPaquetes;
+    Lista<Paquete*>* listaAux;
+    Lista<Router*>* routers
+public: 
+    Administrador(void){};
+    Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs){listaPaquetes = paquetes;};
+    ~Administrador(void){};
+    
+    resetearCaminos();
 };
+Administrador::Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs)
+{
+    listaPaquetes = paquetes;
+    routers = routs;
+}
 
+void resetearCaminos()
+{   
+    listaAux = listaPaquetes;
+    
+    for(int i=0; listaPaquetes->size(); i++){
+        Paquete* paquete = listaAux->cabeza();
+        int sigRout = paquete->getSigRout();
+        Router* routBase = buscarRouter(sigRout, routers);
+        Camino* camino = new Camino(paquete, routBase, routers);
+        listaAux->borrar()
+    }
+}
 //----------------------------------------------------------Main-------------------------------------------------------------
 int main(){
     Lista<Router*>* rout = new Lista<Router*>(); //Lista de todos los routers creados
