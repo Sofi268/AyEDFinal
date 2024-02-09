@@ -95,28 +95,18 @@ Cada 2 ciclos, tomara el control el administrador para recomputar los caminos op
 ## **Solucion propuesta**:  
 
 ### Clases Principales:  
-
-1. *Maquina*: ideada como una interfaz pero implementada como herencia. Ya que tanto el router como la maquina terminal son diferentes tipos de maquina, se establece un id para ambos y metodos de envio y recepcion que cada uno sobreescribira.  
    
-2. *Router*: la clase principal, la cual hereda de maquina y expande mucho mas sus funciones. Diseñada para representar objetos que manipulen paquetes y esten en todas sus etapas tanto en la generacion como la recepcion, el envio y la convergencia al formar una pagina. Distribuyen los paquetes de la forma mas efectiva posible haciendo uso de clases suplementarias para agilizar y optimizar su ejecucion.  
+1. *Router*: la clase principal. Diseñada para representar objetos que manipulen paquetes y esten en todas sus etapas tanto en la generacion como la recepcion, el envio y la convergencia al formar una pagina. Distribuyen los paquetes de la forma mas efectiva posible haciendo uso de clases suplementarias para agilizar y optimizar su ejecucion.  
    
-3. *Terminal*: tambien hereda de Maquina. Se encarga de la generacion, envio y recepcion de paginas hacia y desde el router asociado a ella.  
+2. *Terminal*: Se encarga de la generacion, envio y recepcion de paginas hacia y desde el router asociado a ella.  
    
-4. *Pagina*: representa el objeto final que se quiere transportar mediante los routers.  
+3. *Pagina*: representa el objeto final que se quiere transportar mediante los routers.  
 
-5. *Paquete*: medio de transporte de las paginas a traves de su division en estos segmentos.
+4. *Paquete*: medio de transporte de las paginas a traves de su division en estos segmentos.
 
-6. *Administrador*: clase encargada de la continua actualizacion de los caminos optimos para dirigir a los paquetes en el menor tiempo hacia su destino final.
+5. *Administrador*: clase encargada de la continua actualizacion de los caminos optimos para dirigir a los paquetes en el menor tiempo hacia su destino final.
 
-### Clases Auxiliares:  
-
-1. *Envio*: clase encargada del envio de paquetes del router. Gestiona los diferentes casos posibles, su envio a los routers vecinos o a las maquinas terminales, segun sea el caso.  
-   
-2. *Gestion de Vecinos*: auxiliar para la manipulacion y cuidado de las colas tanto de espera como de trafico de los vecinos como de las colas que a ellos refieren.  
-
-3. *Computos*: calculo del tiempo de espera en las colas de trafico. Clase auxiliar para el Administrador de Sistema.
-
-4. *Camnio*: establece el camino optimo para que cada paquete llegue a su destino en el menor tiempo.
+6. *Camnio*: establece el camino optimo para que cada paquete llegue a su destino en el menor tiempo.
 
 
 ### Clases Extra:  
@@ -130,5 +120,14 @@ Se nos proveyo el codigo de estas estructuras de datos para que sirvan como base
 
 ### Diagrama de Clases:
 
+### Diagramas de Flujo para algunos Metodos: 
+
+recibirPaqueteVecino():
+
+![image](https://github.com/Sofi268/AyEDFinal/assets/116833245/dcba6a17-33a0-4df1-b401-dbaa67c55444)
+
+busquedaLista(): 
+
+![image](https://github.com/Sofi268/AyEDFinal/assets/116833245/efe5a7ee-1e00-4a4d-a0b2-ffc306583dfb)
 
 
