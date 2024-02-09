@@ -406,46 +406,6 @@ template<class T> void Terminal<T>::imprimirRecepcion(Pagina* pag)
     cout<<"Direccion de destino: "<<pag->getIPdestino()<<endl;
 }
 
-//----------------------------------------------------------Gestion Vecinos-------------------------------------------------------
-class GestionVecinos{
-    private:
-        Lista<Cola<Paquete*>*>* colasRoutEspera;
-        Lista<Cola<Paquete*>*>* colasRoutTrafico;
-
-    public:
-        GestionVecinos(void){};
-        GestionVecinos(Lista<Cola<Paquete*>*>* colaEsp, Lista<Cola<Paquete*>*>* colaTraf);
-        ~GestionVecinos(void){};
-};
-
- GestionVecinos::GestionVecinos(Lista<Cola<Paquete*>*>* colaEsp, Lista<Cola<Paquete*>*>* colaTraf)
-{
-    colasRoutEspera = colaEsp;
-    colasRoutTrafico = colaTraf;
-}
-//---------------------------------------------------------Camino-----------------------------------------------------------
-template <class T> class Camino{
-private:
-    Lista<T>* routers;
-
-public:
-    Camino(void){};
-    Camino(Lista<T>* routs);
-    ~Camino(void){}
-    //int[] camino();
-    void setCamino(Paquete* paquete);
-};
-
-template <class T> Camino<T>::Camino(Lista<T>* routs)
-{
-    routers = routs;
-}
-
-template <class T> void Camino<T>::setCamino(Paquete* paquete)
-{
-
-}
-
 //----------------------------------------------------------Router-------------------------------------------------------
 class Router{
 private:
@@ -461,8 +421,9 @@ private:
     Lista<int>* veciConEspera;
     Lista<int>* veciConColaTrafico;
     Lista<int>* numVecinos;
-    GestionVecinos* gestionVecinos;
-    Camino<Router*>* camino;
+    Lista<Paquete*>* listaVacia;
+    Lista<Paquete*>* listaAEnviar;
+    Lista<Paquete*>* listaConCaminos;
 
 public:
     Router(void){};
@@ -480,21 +441,22 @@ public:
     Lista<Cola<Paquete*>*>* getColasTrafico(void){return colasTrafico;};
     Lista<Lista<Lista<Paquete*>*>*>* getListasTerminales(void){return listasTerminales;};
     Lista<int>* getNumVecinos(void){return numVecinos;};
+    Lista<Paquete*>* getListaAEnviar(void){return listaAEnviar;};
 
     //Setters
     void setNuevoVecino(Router* vecino);
     void setNuevaTerminal(Terminal<Router*>* terminal);
+    void setListaConCaminos(Lista<Paquete*>* listaCaminos){ listaConCaminos = listaCaminos;};
 
     //Busqueda
-    Router* buscarRouter(int ID,Lista<Router*>* vecinos);
-    Terminal<Router*>* buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales);
+    static Router* buscarRouter(int ID,Lista<Router*>* vecinos);
+    static Terminal<Router*>* buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales);
     Lista<Paquete*>* buscarLista(int ID, Lista<Lista<Lista<Paquete*>*>*>* listasTerminales, int numeroPag);
     Cola<Paquete*>* buscarCola(int ID, Lista<Cola<Paquete*>*>* colas);
 
     //Recibir Pagina y crear Paquetes
     void recibirPagina(Pagina* pagina);
     void armadoDePaquetes(Pagina* pagina);
-    void setCamino(Paquete* paquete);
     void enviarDirecto(Paquete* paquete);
     void addOrdenado(Paquete* paquete, Lista<Paquete*>* listaTerminal);
     Lista<Paquete*>* armadoLista(Lista<Paquete*>* listaTerminal, int numIndice, Paquete* paquete);
@@ -502,6 +464,7 @@ public:
     //Reconstruccion y envio de pagina
     void recibirPaqueteFinal(Paquete* paquete);
     void reconstruirPagina(Lista<Paquete*>* paquetes);
+    void recibirListaConCaminos(Lista<Paquete*>*);
     void enviarPagina(Pagina* pagina);
 
     //Recepcion de Paquetes y reenvio
@@ -512,6 +475,10 @@ public:
     void enviarPaqueteVecino(Paquete* paquete);
     bool veciTieneEspera(int ID);
     bool veciTieneTrafico(int ID);
+
+    void vaciarLista();
+    void imprimirRecepcion(Paquete* paquete, bool final);
+    int turno(int ID);
 };
 
 Router::Router(int id)
@@ -525,8 +492,9 @@ Router::Router(int id)
     colasEspera = new Lista<Cola<Paquete*>*>();
     listasTerminales = new Lista<Lista<Lista<Paquete*>*>*>();
     numVecinos = new Lista<int>();
-    gestionVecinos = new GestionVecinos(colasEspera, colasTrafico);
-    camino = new Camino<Router*>();
+    listaVacia = new Lista<Paquete*>();
+    listaAEnviar = new Lista<Paquete*>();
+    listaConCaminos = new Lista<Paquete*>();
 }
 
 void Router::setNuevoVecino(Router* vecino)
@@ -597,16 +565,19 @@ void Router::armadoDePaquetes(Pagina* pagina)
     int cantidadPaquetes = pagina->getTamanoPagina();
     for(int i= 0; i<cantidadPaquetes; i++){
         Paquete* paquete = new Paquete(pagina->getNumMaqOrigen(),pagina->getRoutOrigen(), pagina->getNumMaqFinal(), pagina->getRoutFinal(), ID, pagina->getTamanoPagina(), pagina->getNumeroPagina(), i+1, pagina->getIPorigen(),pagina->getIPdestino());
-        setCamino(paquete);
-        enviarDirecto(paquete);
+        listaAEnviar->add(paquete);
     }
 }
-
-void Router::setCamino(Paquete* paquete)
+void Router::recibirListaConCaminos(Lista<Paquete*>* listaCaminos)
 {
-    camino->setCamino(paquete);
+    setListaConCaminos(listaCaminos);
+    for(int i = 0; i<listaCaminos->size(); i++){
+        Paquete* paquete = listaConCaminos->cabeza();
+        enviarDirecto(paquete);
+        listaConCaminos->borrar();
+    }
+    vaciarLista();
 }
-
 void Router::enviarDirecto(Paquete* paquete)
 {
     int sigRouter = paquete->getSigRouter();
@@ -643,7 +614,7 @@ void Router::recibirPaqueteFinal(Paquete* paquete)
     Lista<Paquete*>* listaMaquina = buscarLista(maqTerminal, listasTerminales,numPagina);
     addOrdenado(paquete, listaMaquina);
     if(listaMaquina->size()==cantiTotalPaquetes)reconstruirPagina(listaMaquina);
-
+    imprimirRecepcion(paquete, true);
 }
 
 void Router::addOrdenado(Paquete* paquete, Lista<Paquete*>* listaTerminal)
@@ -736,6 +707,7 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
             veciConColaTrafico->add(siguienteRout);
         }
     }
+    imprimirRecepcion(paquete, false);
 }
 
 void Router::ciclo()
@@ -795,18 +767,37 @@ void Router::enviarPaqueteVecino(Paquete* paquete)
     buscarRouter(routDestino, vecinos)->recibirPaquete(paquete);
 }
 
-//----------------------------------------------------------Administrador-------------------------------------------------------
-class Administrador{
+void Router::vaciarLista()
+{
+    listaAEnviar = listaVacia;
+}
 
-};
+void Router::imprimirRecepcion(Paquete* paquete, bool final){
+    cout<<"Se recibio paquete de pagina numero: "<<paquete->getNumPag()<<endl;
+    if(final)cout<<"Final: si"<<endl;
+    else cout<<"Final: no"<<endl;
+    cout<<"Router receptor: "<<ID;
+    cout<<"Emitido por maquina con direccion: "<<paquete->getIPorigen()<<endl;
+    cout<<"Con destino maquina con direccion: "<<paquete->getIPdestino()<<endl;
+}
 
-//----------------------------------------------------------Computos-------------------------------------------------------
-class Computos{
+int Router::turno(int ID)
+{
+    Cola<Router*>* colaVecino = buscarCola(ID, vecinos);
+    int anchoBanda = colaVecino->getAnchoBanda();
+    int numOrden = colaVecino->getNumOrden();
+    int ciclosEspera = 0;
+    numOrden = numOrden - anchoBanda;
     
-};
-
+    while(numOrden>anchoBanda){
+        ciclosEspera++;
+        numOrden = numOrden - anchoBanda;
+    }
+    return ciclosEspera;
+}
 //----------------------------------------------------------Extra------------------------------------------------------------
-Router* buscarRouter(int numRout, Lista<Router*>* routers) {
+Router* buscarRouter(int numRout, Lista<Router*>* routers) 
+{
     if(routers->esVacia()) return nullptr; 
     if(routers->cabeza()->getID() == numRout){
         return routers->cabeza();
@@ -816,12 +807,44 @@ Router* buscarRouter(int numRout, Lista<Router*>* routers) {
 
 Terminal<Router*>* buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales)
 {
-    if(terminales->esVacia()) return nullptr;
-    if(terminales->cabeza()->getNumeroTerminal() == ID){
-        return terminales->cabeza();
+    if (terminales == nullptr || terminales->esVacia()) {
+        throw std::runtime_error("Error: Lista vacía, no se puede obtener la cabeza");
     }
-    else return buscarTerminal(ID, terminales->resto());
+
+    if (terminales->cabeza()->getNumeroTerminal() == ID) {
+        return terminales->cabeza();
+    } else {
+        return buscarTerminal(ID, terminales->resto());
+    }
 }
+
+//---------------------------------------------------------Camino-----------------------------------------------------------
+class Camino{
+private:
+    Lista<T>* routers;
+
+public:
+    Camino(void){};
+    Camino(Lista<>* routs);
+    ~Camino(void){}
+    //int[] camino();
+    void setCamino(Paquete* paquete);
+};
+
+Camino::Camino(Lista<>* routs)
+{
+    routers = routs;
+}
+
+template <class T> void Camino<T>::setCamino(Paquete* paquete)
+{
+
+}
+
+//----------------------------------------------------------Administrador-------------------------------------------------------
+class Administrador{
+
+};
 
 //----------------------------------------------------------Main-------------------------------------------------------------
 int main(){
@@ -897,15 +920,21 @@ int main(){
 
         //Seleccion de maquina generadora aleatoria
         srand(time(nullptr));
-        int numTerminalAleat = rand() % (cantidadTerminales/2);
+        int numTerminalAleat = rand() % cantidadTerminales;
         Terminal<Router*>* terminalOrigenAleat = buscarTerminal(numTerminalAleat, terminales);
-        int numTerminalFinal =(cantidadTerminales/2) + rand() % ((cantidadTerminales+1)-(cantidadTerminales/2));
+        srand(66);
+        int numTerminalFinal = rand() % cantidadTerminales;
+        if(numTerminalAleat == numTerminalFinal){
+            srand(11117);
+            numTerminalFinal = rand() % cantidadTerminales;
+        }
+
         Terminal<Router*>* terminalFinalAleat = buscarTerminal(numTerminalFinal, terminales);
-     
         //Generacion de la pagina y envio
         terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter());
     }
 
-    
     cout<<"Hello World";
+     
+    return EXIT_SUCCESS;
 }
