@@ -550,6 +550,7 @@ Lista<Paquete*>* Router::buscarLista(int ID, Lista<Lista<Lista<Paquete*>*>*>* li
 
 Cola<Paquete*>* Router::buscarCola(int ID, Lista<Cola<Paquete*>*>* colas)
 {
+    if(colas->esVacia()) return nullptr;
     Cola<Paquete*>* colaBuscada = colas->cabeza();
     if(colaBuscada->getNumRout() == ID) return colaBuscada;
     else return buscarCola(ID, colas->resto());
@@ -783,17 +784,20 @@ void Router::imprimirRecepcion(Paquete* paquete, bool final){
 
 int Router::turno(int ID)
 {
-    Cola<Router*>* colaVecino = buscarCola(ID, vecinos);
-    int anchoBanda = colaVecino->getAnchoBanda();
-    int numOrden = colaVecino->getNumOrden();
-    int ciclosEspera = 0;
-    numOrden = numOrden - anchoBanda;
-    
-    while(numOrden>anchoBanda){
-        ciclosEspera++;
+    Cola<Paquete*>* colaVecino = buscarCola(ID, colasTrafico);
+    if(colaVecino == nullptr)return 0;
+    else{
+        int anchoBanda = colaVecino->getAnchoDeBanda();
+        int numOrden = colaVecino->getOrdenPagina();
+        int ciclosEspera = 0;
         numOrden = numOrden - anchoBanda;
+        
+        while(numOrden>anchoBanda){
+            ciclosEspera++;
+            numOrden = numOrden - anchoBanda;
+        }
+        return ciclosEspera;
     }
-    return ciclosEspera;
 }
 //----------------------------------------------------------Extra------------------------------------------------------------
 Router* buscarRouter(int numRout, Lista<Router*>* routers) 
@@ -856,6 +860,9 @@ int main(){
     int limInferior = 0;
     Administrador administrador;
     fill(*matrizAdy, *matrizAdy + cantidadRouters*cantidadRouters, INFI); //Inicializo la matriz de adyacencia con todos los nodos desconectados
+    Lista<Paquete*>* listaVacia = new Lista<Paquete*>();
+    Lista<Paquete*>* listaAEnviar = new Lista<Paquete*>();
+    Lista<Paquete*>* listaRecibida = new Lista<Paquete*>();
     
     //Creacion de los routers
     for(int i = 0; i <= cantidadRouters; i++){
@@ -932,6 +939,20 @@ int main(){
         Terminal<Router*>* terminalFinalAleat = buscarTerminal(numTerminalFinal, terminales);
         //Generacion de la pagina y envio
         terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter());
+        
+        Router* router = terminalOrigenAleat->getRouterAsociado();
+        listaRecibida = router->getListaAEnviar();
+        for(int j = 0; j<listaRecibida->size(); j++){
+            Paquete* paquete = listaRecibida->cabeza();
+            int sigRouter = paquete->getSigRout();
+            Router* routBase = buscarRouter(sigRouter, rout);
+            Camino* camino = new Camino(paquete, rout, routBase);
+            listaAEnviar->add(paquete);
+            listaRecibida->borrar();
+        }
+        router->recibirListaConCaminos(listaRecibida);
+        router->vaciarLista();
+        listaAEnviar = listaVacia;
     }
 
     cout<<"Hello World";
