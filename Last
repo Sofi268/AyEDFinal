@@ -67,7 +67,7 @@ template <class T> bool Lista<T>::esVacia(void)
 template <class T> T Lista<T>::cabeza(void)
 {
     if (this->esVacia()) {
-        throw std::runtime_error("Error: Lista vacía, no se puede obtener la cabeza");
+        throw std::runtime_error("Error: Esta lista vacía, no se puede obtener la cabeza");
     }
     return czo->getDato();
 }
@@ -424,10 +424,11 @@ private:
     Lista<Paquete*>* listaVacia;
     Lista<Paquete*>* listaAEnviar;
     Lista<Paquete*>* listaConCaminos;
+    Lista<Paquete*>* paquetes;
 
 public:
     Router(void){};
-    Router(int id);
+    Router(int id, Lista<Paquete*>* paqs);
     ~Router(void){};
 
     //Gettters
@@ -479,9 +480,11 @@ public:
     void vaciarLista();
     void imprimirRecepcion(Paquete* paquete, bool final);
     int turno(int ID);
+    void borrarPaquete(Paquete* paq);
+    void agregarPaquete(Paquete* paq);
 };
 
-Router::Router(int id)
+Router::Router(int id, Lista<Paquete*>* paqs)
 {
     ID = id;
     cantidadVecinos = 0;
@@ -495,6 +498,7 @@ Router::Router(int id)
     listaVacia = new Lista<Paquete*>();
     listaAEnviar = new Lista<Paquete*>();
     listaConCaminos = new Lista<Paquete*>();
+    paquetes = paqs;
 }
 
 void Router::setNuevoVecino(Router* vecino)
@@ -574,6 +578,7 @@ void Router::recibirListaConCaminos(Lista<Paquete*>* listaCaminos)
     setListaConCaminos(listaCaminos);
     for(int i = 0; i<listaCaminos->size(); i++){
         Paquete* paquete = listaConCaminos->cabeza();
+        paquetes->add(paquete);
         enviarDirecto(paquete);
         listaConCaminos->borrar();
     }
@@ -609,6 +614,7 @@ void Router::recibirPaquete(Paquete* paquete)
 
 void Router::recibirPaqueteFinal(Paquete* paquete)
 {
+    borrarPaquete(paquete);
     int maqTerminal = paquete->getMaquinaFinal();
     int cantiTotalPaquetes = paquete->getCantiTotalPaq();
     int numPagina = paquete->getNumPag();
@@ -799,6 +805,17 @@ int Router::turno(int ID)
         return ciclosEspera;
     }
 }
+
+void Router::borrarPaquete(Paquete* paq)
+{
+    paquetes->borrarDato(paq);
+}
+
+void Router::agregarPaquete(Paquete* paq)
+{
+    paquetes->add(paq);
+}
+
 //----------------------------------------------------------Extra------------------------------------------------------------
 Router* buscarRouter(int numRout, Lista<Router*>* routers) 
 {
@@ -809,21 +826,17 @@ Router* buscarRouter(int numRout, Lista<Router*>* routers)
     else return buscarRouter(numRout, routers->resto());
 }
 
-Terminal<Router*>* buscarTerminal(int ID, Lista<Terminal<Router*>*>* terminales)
+Terminal<Router*>* buscarTerminal(int numTerminal, Lista<Terminal<Router*>*>* terminales)
 {
-    if (terminales == nullptr || terminales->esVacia()) {
-        throw std::runtime_error("Error: Lista vacía, no se puede obtener la cabeza");
-    }
-
-    if (terminales->cabeza()->getNumeroTerminal() == ID) {
+    if (terminales->esVacia()) return nullptr;
+    if (terminales->cabeza()->getNumMaqGeneral() == numTerminal) {
         return terminales->cabeza();
-    } else {
-        return buscarTerminal(ID, terminales->resto());
-    }
+    } 
+    else return buscarTerminal(numTerminal, terminales->resto());
 }
 
 //---------------------------------------------------------Camino-----------------------------------------------------------
-class Camino{
+class Camino {
 private:
     bool ultimoRouter;
     Paquete* paq;
@@ -831,21 +844,20 @@ private:
     Router* proximo;
     int sigRouter;
     Lista<Router*>* routers;
-    Lista<int> caminoAux;
+    Lista<int> caminoAnt;
+    Lista<int>* caminoAux;
     int matriz[cantidadRouters][cantidadRouters];
-    Lista<int> camino;
 
 public:
     Camino(void){};
     Camino(int matrizAdy[cantidadRouters][cantidadRouters], Paquete* paquete,Router* routBase, Lista<Router*>* rout);
     ~Camino(void){};
     
-    int getTurno(Router* routerProx);
-
-    void setProximo(int ID);
     void setCamino(Paquete* paquete);
-
+    int *dijkstra(int C[][cantidadRouters],int s, int t, int P[]);
+    void camino(int P[], int s, int t);
     void copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters]);
+    void actualizacionMatriz();
 };
 
 Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Paquete* paquete,Router* routBase, Lista<Router*>* rout)
@@ -854,33 +866,92 @@ Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Paquete* paquete
     paq = paquete;
     basePartida = routBase;
     routers = rout;
-    caminoAux = paquete->getCamino();
+    caminoAnt = paquete->getCamino();
     proximo = basePartida;
-    if(caminoAux.size()>1){
-        sigRouter = caminoAux.cabeza();
+    if(paquete->getCamino().size() == 1) ultimoRouter = true;
+    else ultimoRouter = false;
+    sigRouter = caminoAnt.cabeza();
+    caminoAux = new Lista<int>();
+    if(!ultimoRouter){
+        actualizacionMatriz();
         setCamino(paquete);
     }
-    else  sigRouter = NULL;
 }
 
-int Camino::getTurno(Router* prox)
-{   
-    if(sigRouter!=NULL){
-        int numTurno = prox->turno(sigRouter);
-        return numTurno;
-    }
-    return NULL;
-}
+int* Camino::dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
+{
+    static int D[cantidadRouters];
+    int S[cantidadRouters];
+    int actual, i, k, b;
+    int menordist, nuevadist;
+    // inicializacion
+    for(i=0;i<cantidadRouters;i++){
+                            S[i]=NO_MIEMBRO;
+                            D[i]=INFI;
+                            Pre[i]= -1;
+    }//fin for
+    S[s]=MIEMBRO; D[s]=0; actual=s; b=1; k=0;
+    while((actual!=t)&&(b==1)){
+                    b=0;
+                    menordist=INFI;
+                    //printf("\n\n   D[%i]=%3i ",actual,D[actual]);
+                    for(i=0;i<cantidadRouters;i++){
+                            //cout<<"\n  i= "<<i;                
+                            if(S[i]==NO_MIEMBRO){
+                                    nuevadist=D[actual]+C[actual][i];
+                                    //printf("\n nuevadist=%3i D[%2i]=%3i ",nuevadist,i,D[i]);
+                                    if(nuevadist<D[i]){
+                                            D[i]=nuevadist;//actual es menor que la anterior
+                                            Pre[i]=actual; b=1;
+                                    }//fin if
+                                    //printf("\n menordist=%3i D[%2i]=%3i ",menordist,i,D[i]);
+                                    if(D[i]<menordist){
+                                            menordist=D[i];
+                                            k=i;  b=1;//guardo el nodo de la menor distancia
+                                    }//fin if
+                            }//fin if
+                    }//fin for
+                                
+                    actual=k; // actual se ubica en el nodo de menor distancia
+                    S[actual]=MIEMBRO;
+                    printf("\n\n         D     S     Pre");
+                    for(i=0;i<cantidadRouters;i++){
+                            printf("\n[%2i] %5i %5i %5i     ",i,D[i], S[i],Pre[i]);
+                    } 
+        
+                    //printf("\n\n   D[%i]=%3i ",actual,D[actual]);
+                    
+    }//fin while
+    return D;
+}// fin dijkstra
 
-void Camino::setProximo(int ID){
-    proximo = buscarRouter(ID, routers);
-    sigRouter = caminoAux.cabeza();
+
+void Camino::camino(int P[], int s, int t)
+{  
+    if (t==s) caminoAux->add(s);
+   else{
+        camino(P,s,P[t]);
+        caminoAux->add(t);
+   }
 }
 
 void Camino::setCamino(Paquete* paquete)
 {
-
+    int *pdist, P[cantidadRouters];
+    int routerBase = basePartida->getID();
+    int routDestino = paquete->getRouterFinal();
+    pdist = dijkstra(matriz, routerBase, routDestino, P);
+    if(pdist[routDestino]!=INFI){
+        cout<<"\n\n distancia minima del nodo "<<s
+            <<" al nodo "<<t<<" es= "<<pdist[routDestino];
+        cout<<"\n\n CAMINO= ";
+        camino(P,s,t);
+        paquete->setNuevoCamino(*caminoAux);
+    }                
+    else cout<<"\n NO HAY CAMINO";
+    
 }
+
 void Camino::copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters])
 {
     for(int i =0; i<cantidadRouters; i++){
@@ -889,6 +960,24 @@ void Camino::copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters])
         }
     }
 }
+
+void Camino::actualizacionMatriz()
+{
+    int routActual = paq->getRoutActual();
+    for(int i = 0; i<cantidadRouters; i++){
+        for(int j = 0; j<cantidadRouters; j++){
+            if(j!=i){
+                if(matriz[i][j]!=INFI){
+                    if((j!=routActual)&&(i!=routActual)){
+                        int peso = buscarRouter(i, routers)->turno(j);
+                        matriz[i][j] = peso;
+                    }
+                }
+            }
+        }
+    }
+};
+
 
 //----------------------------------------------------------Administrador-------------------------------------------------------
 class Administrador{
@@ -941,7 +1030,7 @@ int main(){
     Lista<Terminal<Router*>*>* terminales = new Lista<Terminal<Router*>*>(); //Lista de todas las maquinas creadas, independiente del routerAEnviar asociado
     Lista<Paquete*>* paquetes = new Lista<Paquete*>(); //Lista de todos los paquetes creados, independiente de la maquina creadora
     int pagsCanti = rand() % 50; //Numero aleatorio de paginas generadas
-    int baseCantidadVeci = 1; //Minimo de cantidad de vecinos por router
+    int baseCantidadVeci = 4; //Minimo de cantidad de vecinos por router
     int limInferior = 0;
     fill(*matrizAdy, *matrizAdy + cantidadRouters*cantidadRouters, INFI); //Inicializo la matriz de adyacencia con todos los nodos desconectados
     Lista<Paquete*>* listaVacia = new Lista<Paquete*>();
@@ -949,48 +1038,47 @@ int main(){
     Lista<Paquete*>* listaRecibida = new Lista<Paquete*>();
     
     //Creacion de los routers
-    for(int i = 0; i <= cantidadRouters; i++){
-        Router* nuevoRout = new Router(i+1);
+    for(int i = 0; i < cantidadRouters; i++){
+        Router* nuevoRout = new Router(i+1, paquetes);
         rout->add(nuevoRout);
     }
+    srand(time(nullptr));
 
     //Creacion de Terminales
     for(int i = 0; i < cantidadTerminales; i++){
-        int numMaq,numRout;
+        int numMaq, numRout;
         int idCantTermi;
-        bool apto = false;//Comprobacion que numero de maquinas del routerAEnviar elegido sea menor que el limite (256)
-
+        bool noApto = true;//Comprobacion que numero de maquinas del routerAEnviar elegido sea menor que el limite (256)
+        
         //Bucle para seleccionar un routerAEnviar aleatorio apto, con cantidad de maquinas disponibles 
-        while(!apto){ 
-            srand(time(nullptr));
-            numRout = rand() % (cantidadRouters - 1); //Eleccion de Router Aleatorio
+        while(noApto){ 
+            numRout = (rand() % (cantidadRouters - 1)) + 1; //Eleccion de Router Aleatorio
             Router* routTentativo = buscarRouter(numRout, rout); 
             idCantTermi = routTentativo->getCantidadTerminales();//Obtencion de la cantidad de Maquinas asociada al routerAEnviar aleatorio obtenido
-            
             if(idCantTermi <256 ){  //Comprobacion de la cantidad de maquinas es menor a la maxima Tentativo
-                numMaq = idCantTermi++;
+                numMaq = idCantTermi+1;
                 Terminal<Router*>* nuevaTerminal = new Terminal<Router*>(numMaq,numRout,routTentativo,i);//Creacion de la nueva maquina
                 routTentativo->setNuevaTerminal(nuevaTerminal);//Asociacion de la maquina al routerAEnviar
-                terminales->add(nuevaTerminal);//Agregado de la maquina nueva a la lista de maquinas  
-                apto = true;  
+                terminales->add(nuevaTerminal);//Agregado de la maquina nueva a la lista de maquinas    
             }            
+            noApto = false;
         }
     }
     
     // Creacion de conexiones entre los Routers
     // Dos bucles: el primero para elegir los routers vecinos y guardarlos, y el segundo para guardar en los vecinos ese routerAEnviar
     Lista<Router*>* routAux = rout;
-
+    srand(47302463);
     for(int i = 0; i < cantidadRouters; i++){ //i representa el numero del routerAEnviar al que se le esta designando los vecinos
         Router* routActual = routAux->cabeza();
         Router* routVecino;
         int idActual = routActual->getID();
         int idVecino;
-        int cantVeciAleat = (rand() % baseCantidadVeci) + limInferior;
+        int cantVeciAleat = ((rand() % baseCantidadVeci)) + 1 + limInferior;
 
+        srand(998346);
         for(int j = 0; j<cantVeciAleat; j++){
-            srand(time(nullptr));
-            int numRoutVeci = rand() % (cantidadRouters);
+            int numRoutVeci = (rand() % (cantidadRouters-1)) + 1;
             if(numRoutVeci!=routActual->getID()){
                 routVecino = buscarRouter(numRoutVeci, rout);
                 idVecino = routVecino->getID();
@@ -1010,14 +1098,14 @@ int main(){
     for(int i=0; i<pagsCanti; i++){
 
         //Seleccion de maquina generadora aleatoria
-        srand(time(nullptr));
-        int numTerminalAleat = rand() % cantidadTerminales;
+        srand(658999);
+        int numTerminalAleat = (rand() % (cantidadTerminales-1)) + 1;
         Terminal<Router*>* terminalOrigenAleat = buscarTerminal(numTerminalAleat, terminales);
         srand(66);
-        int numTerminalFinal = rand() % cantidadTerminales;
+        int numTerminalFinal = (rand() % (cantidadTerminales-1)) + 1;
         if(numTerminalAleat == numTerminalFinal){
             srand(11117);
-            numTerminalFinal = rand() % cantidadTerminales;
+            numTerminalFinal = (rand() % (cantidadTerminales-1)) + 1;
         }
 
         Terminal<Router*>* terminalFinalAleat = buscarTerminal(numTerminalFinal, terminales);
@@ -1053,7 +1141,6 @@ int main(){
         
         for(int j = 0; j<rout->size(); j++){
             Router* auxRout = routsAux->cabeza();
-            cout<<"Inicio de ciclo"<<endl;
             auxRout->ciclo();
             routsAux->borrar();
         }
