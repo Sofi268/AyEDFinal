@@ -1,14 +1,120 @@
-template<class T> class Camino{
+class Camino {
 private:
-    Lista<T*>* routers;
+    int matriz[cantidadRouters][cantidadRouters];
+    Lista<Router*>* routers;
+    Paquete* paquete;
+    Router* routOrigen;
+    Router* routFinal;
+    Lista<int>* cam = new Lista<int>();
+    
 
 public:
-    Camino(void){};
-    Camino(Lista<T*>* routs);
-    ~Camino(void){}
+    Camino(){};
+    Camino(int matriz[cantidadRouters][cantidadRouters], Lista<Router*>* routs);
+    ~Camino(void){};
+
+    void setNuevoPaquete(Paquete* paq);
+    void copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters]);
+    void actualizarMatriz();
+    int *dijkstra(int C[][cantidadRouters],int s, int t, int P[]);
+    void camino(int P[], int s, int t);
+    void guardarCamino(int t);
+    void setCamino(void);
+
 };
 
-template<class T> Camino<T>::Camino(Lista<T*>* routs)
+Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Lista<Router*>* routs)
 {
+    copiarMatriz(matrizAdy);
     routers = routs;
+}
+
+void Camino::setNuevoPaquete(Paquete* paq)
+{
+    paquete = paq;
+    routOrigen = paquete->getRoutActual();
+    routFinal = paquete->getRouterFinal();
+    actualizarMatriz();
+    setCamino();
+}
+
+void Camino::copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters])
+{
+    for(int i =0; i<cantidadRouters; i++){
+        for(int j = 0; j<cantidadRouters; j++){
+            matriz[i][j] = matrizAdy[i][j];
+        }
+    }
+}
+
+void Camino::setCamino(void)
+{
+    int *pdist, P[cantidadRouters];
+    pdist = 
+
+}
+
+int* Camino::dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
+{
+    static int D[cantidadRouters]; 
+    int S[cantidadRouters];
+    int actual, i, k, b;
+    int menordist, nuevadist;
+    for(i=0;i<cantidadRouters;i++){
+                            S[i]=NO_MIEMBRO;
+                            D[i]=INFI;
+                            Pre[i]= -1;
+    }//fin for
+    S[s]=MIEMBRO; D[s]=0; actual=s; b=1; k=0;
+    while((actual!=t)&&(b==1)){
+                    b=0;
+                    menordist=INFI;
+                    printf("\n\n   D[%i]=%3i ",actual,D[actual]);
+                    for(i=0;i<cantidadRouters;i++){
+                            cout<<"\n  i= "<<i;                
+                            if(S[i]==NO_MIEMBRO){
+                                    nuevadist=D[actual]+C[actual][i];
+                                    printf("\n nuevadist=%3i D[%2i]=%3i ",nuevadist,i,D[i]);
+                                    if(nuevadist<D[i]){
+                                            D[i]=nuevadist;//actual es menor que la anterior
+                                            Pre[i]=actual; b=1;
+                                    }//fin if
+                                    printf("\n menordist=%3i D[%2i]=%3i ",menordist,i,D[i]);
+                                    if(D[i]<menordist){
+                                            menordist=D[i];
+                                            k=i;  b=1;//guardo el nodo de la menor distancia
+                                    }//fin if
+                            }//fin if
+                    }//fin for
+                                
+                    actual=k; // actual se ubica en el nodo de menor distancia
+                    S[actual]=MIEMBRO;
+                    printf("\n\n         D     S     Pre");
+                    for(i=0;i<cantidadRouters;i++){
+                            printf("\n[%2i] %5i %5i %5i     ",i,D[i], S[i],Pre[i]);
+                    } 
+        
+                    printf("\n\n   D[%i]=%3i ",actual,D[actual]);
+                    
+    }//fin while
+    return D;
+}// fin dijkstra
+
+
+void Camino::camino(int P[], int s, int t)
+{  
+    if (t==s){
+        cam->addLast(s);
+        cout<< s<<"  ";
+    }
+   else{
+        camino(P,s,P[t]);
+        cout<<t<<"  ";
+        guardarCamino(t);
+   }
+}
+
+void Camino::guardarCamino(int t)
+{
+    cam->addLast(t);
 }
