@@ -50,8 +50,19 @@ void Camino::copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters])
 void Camino::setCamino(void)
 {
     int *pdist, P[cantidadRouters];
-    pdist = 
-
+    pdist=dijkstra(matriz,routOrigen - 1,routFinal - 1,P);
+    if (pdist[routFinal->getID()]!=INFI){
+        cout<<"\n\n distancia minima router " <<routOrigen->getID()<<" al router "<<routFinal<<" es= "<<routFinal->getID();
+   
+        cout<<"\n\n CAMINO= ";
+        camino(P,routOrigen,routFinal);
+       
+    }                
+    else cout<<"\n NO HAY CAMINO";
+    
+    cout<<endl<<endl<<endl;
+    cam->borrar();
+    paquete->setNuevoCamino(cam);
 }
 
 int* Camino::dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
