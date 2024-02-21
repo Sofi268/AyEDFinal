@@ -704,6 +704,7 @@ void Router::recibirPaquete(Paquete* paquete)
 
 void Router::recibirPaqueteFinal(Paquete* paquete)
 {
+    cout<<"Problema con recibir paquete Final"<<endl;
     borrarPaquete(paquete);
     int maqTerminal = paquete->getMaquinaFinal();
     int cantiTotalPaquetes = paquete->getCantiTotalPaq();
@@ -752,6 +753,7 @@ Lista<Paquete*>* Router::armadoLista(Lista<Paquete*>* listaTerminal, int numIndi
 
 void Router::recibirPaqueteVecino(Paquete* paquete)
 {
+    cout<<"Problema con recibir paquete Vecino"<<endl;
     paquete->borrarElemCamino();
     int siguienteRout = paquete->getSigRouter();
     if(veciTieneEspera(siguienteRout)){//Si existe una cola de espera para el trafico del router
@@ -862,7 +864,8 @@ bool Router::veciTieneTrafico(int ID)
 void Router::enviarPaqueteVecino(Paquete* paquete)
 {
     int routDestino = paquete->getSigRouter();
-    buscarRouter(routDestino, vecinos)->recibirPaquete(paquete);
+    Router* routDest = buscarRouter(routDestino, vecinos);
+    routDest->recibirPaquete(paquete);
 }
 
 void Router::imprimirRecepcion(Paquete* paquete, bool final){
@@ -967,6 +970,7 @@ public:
     void setCamino(void);
     void resetCamino(void);
     void imprimirMatrizAdy(void);
+    bool hayCamino(int routO, int routD);
 };
 
 Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Lista<Router*>* routs)
@@ -1041,11 +1045,11 @@ void Camino::setCamino(void)
     int *pdist, P[cantidadRouters];
     pdist=dijkstra(matriz,routOrigen,routFinal,P);
 
-    if (pdist[routFinal-1]!=INFI){
+    if (pdist[routFinal]!=INFI){
         cout<<"La distancia minima router " <<routOrigen<<" al router "<<routFinal<<" es = "<<pdist[routFinal];
         camino(P,routOrigen ,routFinal);
     }                
-    else cout<<"\n NO HAY CAMINO";
+    //else cout<<"\n NO HAY CAMINO";
     
     cout<<endl<<endl<<endl;
     cam->borrar();
@@ -1107,6 +1111,7 @@ void Camino::camino(int P[], int s, int t)
         cam->addLast(b);
    }
 }
+
 void Camino::imprimirMatrizAdy(void)
 {
     for(int i=0; i<cantidadRouters; i++){
@@ -1115,6 +1120,15 @@ void Camino::imprimirMatrizAdy(void)
         }
         cout<<endl;
     }
+}
+
+bool Camino::hayCamino(int routO, int routD)
+{
+    int *pdistancia, P[cantidadRouters];
+    pdistancia = dijkstra(matriz,routO,routD,P);
+
+    if (pdistancia[routD]!=INFI)return true;
+    else return false;
 }
 
 //----------------------------------------------------------Administrador-------------------------------------------------------
@@ -1247,9 +1261,9 @@ int main(){
     Camino* camino = new Camino(matrizAdy, rout);
 
     //Creacion de paginas 
-    int cantidadPaginas = posiblesPaginas(rd);
-    cout<<"LA CANTIDAD DE PAGINAS ES: "<<cantidadPaginas<<endl;
-    for(int i=0; i<cantidadPaginas; i++){
+    // int cantidadPaginas = posiblesPaginas(rd);
+    // cout<<"LA CANTIDAD DE PAGINAS ES: "<<cantidadPaginas<<endl<<endl<<endl;
+    for(int i=0; i<2; i++){
         
         //Seleccion de maquina generadora aleatoria
         
@@ -1269,58 +1283,60 @@ int main(){
         
         //Generacion de la pagina y envio
         Router* routerO = terminalOrigenAleat->getRouterAsociado();
-        cout<<"Router origen aleatoria de la pagina numero : "<<i<<" es: "<<routerO->getID()<<endl<<endl;
+        int routO = routerO->getID();
+        cout<<"Router origen aleatoria de la pagina numero : "<<i<<" es: "<<routO<<endl<<endl;
         Router* routerD = terminalFinalAleat->getRouterAsociado();
-        cout<<"Router destino aleatoria de la pagina numero : "<<i<<" es: "<<routerD->getID()<<endl<<endl;
+        int routD = routerD->getID();
+        cout<<"Router destino aleatoria de la pagina numero : "<<i<<" es: "<<routD<<endl<<endl;
 
-        if(routerD->getID()!=routerO->getID()){
-            int tam = posiblesTamanios(rd);
-            terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter(),numTerminalFinal,tam);
-            cout<<"Numero de etapa: 1"<<endl;
-            listaRecibida = routerO->getListaAEnviar();
-            cout<<"Numero de etapa: 2"<<endl;
-            int tamanio = listaRecibida->size();
-            Paquete* paquete = listaRecibida->cabeza();
-            cout<<"Tamanio de Lista recibida en Main: "<<tamanio<<endl;
-            cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
-            camino->setNuevoPaquete(paquete);
-            Lista<int>* caminoPaq = paquete->getCamino();
-           
-            cout<<"Numero de etapa: 3"<<endl;
-            cout<<endl;
-            listaAEnviar->add(paquete);
-            listaRecibida = listaRecibida->resto();
-            cout<<"Entrada al bucle de paquetes exitoso"<<endl;
-            cout<<"Camino del 1 paquete: "<<endl;
-            caminoPaq->impre();
-            for(int j = 1; j<tamanio; j++){
-                Lista<int>* camResto = new Lista<int>();
-                camResto->copiar(caminoPaq);
-                camResto->borrar();
-                cout<<endl;
-                cout<<"Camino del "<<j + 1<<" paquete: "<<endl;
-                camResto->impre();
-                cout<<endl;
+        if(routD!=routO){
+            if(camino->hayCamino(routO,routD)){
+                int tam = posiblesTamanios(rd);
+                terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter(),numTerminalFinal,tam);
+                listaRecibida = routerO->getListaAEnviar();
+                int tamanio = listaRecibida->size();
                 Paquete* paquete = listaRecibida->cabeza();
+                cout<<"Tamanio de Lista recibida en Main: "<<tamanio<<endl;
                 cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
-                paquete->setNuevoCamino(camResto);
-                paquete->getCamino()->impre();
+                camino->setNuevoPaquete(paquete);
+                Lista<int>* caminoPaq = paquete->getCamino();
+            
                 cout<<endl;
                 listaAEnviar->add(paquete);
-                listaRecibida= listaRecibida->resto();
-            }
-            cout<<"Numero de etapa: 4"<<endl;
-            cout<<"La lista a Enviar al router desde el main tiene un tamanio de: "<<listaAEnviar->size()<<endl;
-            
-            routerO->recibirListaConCaminos(listaAEnviar);
-           
-            cout<<"Numero de etapa: 5"<<endl;
-            routerO->vaciarListaAEnviar();
-            listaRecibida = listaVacia;
-            listaAEnviar = listaVacia;
-            cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
+                listaRecibida = listaRecibida->resto();
+                cout<<"Entrada al bucle de paquetes exitoso"<<endl;
+                cout<<"Camino del 1 paquete: "<<endl;
+                caminoPaq->impre();
+                for(int j = 1; j<tamanio; j++){
+                    Lista<int>* camResto = new Lista<int>();
+                    camResto->copiar(caminoPaq);
+                    camResto->borrar();
+                    cout<<endl;
+                    cout<<"Camino del "<<j + 1<<" paquete: "<<endl;
+                    camResto->impre();
+                    cout<<endl;
+                    Paquete* paquete = listaRecibida->cabeza();
+                    cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
+                    paquete->setNuevoCamino(camResto);
+                    paquete->getCamino()->impre();
+                    cout<<endl;
+                    listaAEnviar->add(paquete);
+                    listaRecibida= listaRecibida->resto();
+                }
 
-            cout<<"Esta: "<<camino->getCamino()->esVacia()<<endl;
+                cout<<"La lista a Enviar al router desde el main tiene un tamanio de: "<<listaAEnviar->size()<<endl;
+                
+                routerO->recibirListaConCaminos(listaAEnviar);
+            
+                routerO->vaciarListaAEnviar();
+                listaRecibida = listaVacia;
+                listaAEnviar = listaVacia;
+                cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
+
+                cout<<"Esta: "<<camino->getCamino()->esVacia()<<endl;
+                cout<<endl<<endl<<endl;
+            }
+            else i--;
         }
         else i--;
     }
