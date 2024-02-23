@@ -475,11 +475,11 @@ template<class T> void Terminal<T>::recibirPagina(Pagina* pag)
 
 template<class T> void Terminal<T>::imprimirRecepcion(Pagina* pag)
 {
-    cout<<endl<<endl<<endl;
+    cout<<endl<<endl;
     cout<<"La maquina "<<numTerminal<<" recibio exitosamente la pagina numero: "<<pag->getNumeroPagina()<<endl;
     cout<<"Direccion de envio: "<<pag->getIPorigen()<<endl;
     cout<<"Direccion de destino: "<<pag->getIPdestino()<<endl;
-    cout<<endl<<endl<<endl;
+    cout<<endl<<endl;
 }
 
 //----------------------------------------------------------Router-------------------------------------------------------
@@ -707,20 +707,18 @@ void Router::recibirListaConCaminos(Lista<Paquete*>* listaCaminos)
     setListaConCaminos(listaCaminos);
     Lista<Paquete*>* listaAux = listaConCaminos;
     int tamLista = listaConCaminos->size();
-    cout<<"Tamanio de la lista con caminos original es: "<<tamLista<<endl;
+    //cout<<"Tamanio de la lista con caminos original es: "<<tamLista<<endl;
     for(int i = 0; i<tamLista; i++){
         Paquete* paquete = listaAux->cabeza();
         paquetes->add(paquete);
-        cout<<"Cantidad de paquetes: "<<paquetes->size()<<endl;
+        //cout<<"Cantidad de paquetes: "<<paquetes->size()<<endl;
         enviarDirecto(paquete);
         if(listaAux->resto()->esVacia())break;
         listaAux = listaAux->resto();
-        cout<<"Iteracion numero: "<<i<<endl;
-        cout<<"Ahora es: "<<tamLista<<endl;
         
     }
     vaciarLista(listaConCaminos);
-    cout<<"La lista de caminos esta vacia: "<<listaConCaminos->esVacia()<<endl<<endl;
+    //cout<<"La lista de caminos esta vacia: "<<listaConCaminos->esVacia()<<endl<<endl;
 }
 
 void Router::enviarDirecto(Paquete* paquete)
@@ -755,7 +753,7 @@ void Router::recibirPaquete(Paquete* paquete)
 void Router::recibirPaqueteFinal(Paquete* paquete)
 {
     borrarPaquete(paquete);
-    cout<<"El paquete numero "<< paquete->getOrdenPagina()<<" de la pagina "<<paquete->getNumPag()<<" sigue vivo "<<endl;
+    //cout<<"El paquete numero "<< paquete->getOrdenPagina()<<" de la pagina "<<paquete->getNumPag()<<" sigue vivo "<<endl;
     int maqTerminal = paquete->getMaquinaFinal();
     int cantiTotalPaquetes = paquete->getCantiTotalPaq();
     int numPagina = paquete->getNumPag();
@@ -787,7 +785,6 @@ Paquete* Router::buscarElemMenor(Lista<Paquete*>* listaTerminal)
 
     Paquete* paqueteMenor = listaAux->cabeza();
     while (listaAux->size()>1) {
-        //cout<<"Todo bien hasta aca"<<endl;
         Paquete* paqueteActual = listaAux->resto()->cabeza();
         if (paqueteActual->getOrdenPagina() < paqueteMenor->getOrdenPagina()) {
             paqueteMenor = paqueteActual;
@@ -867,7 +864,7 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
             veciConColaTrafico->add(siguienteRout);
         }
     }
-    imprimirRecepcion(paquete, false);
+    //imprimirRecepcion(paquete, false);
 }
 
 void Router::ciclo()
@@ -1116,7 +1113,6 @@ void Camino::setCamino(void)
     }                
     //else cout<<"\n NO HAY CAMINO";
     
-    cout<<endl<<endl<<endl;
     cam->borrar();
     cam->borrar();
     cam->addLast(routFinal);
@@ -1359,28 +1355,25 @@ int main(){
                 int tam = posiblesTamanios(rd);
                 terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter(),numTerminalFinal,tam);
                 listaRecibida = routerO->getListaAEnviar();
-                cout<<"El tamanio de la lista recibida en el main es de: "<<listaRecibida->size()<<endl;
+                //cout<<"El tamanio de la lista recibida en el main es de: "<<listaRecibida->size()<<endl;
                 int tamanio = listaRecibida->size();
                 Paquete* paquete = listaRecibida->cabeza();
-                cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
+                //cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
                 camino->setNuevoPaquete(paquete);
                 Lista<int>* caminoPaq = paquete->getCamino();
             
                 cout<<endl;
                 listaAEnviar->add(paquete);
                 listaRecibida = listaRecibida->resto();
-                cout<<"Entrada al bucle de paquetes exitoso"<<endl;
+                //cout<<"Entrada al bucle de paquetes exitoso"<<endl;
                 caminoPaq->impre();
                 for(int j = 1; j<tamanio; j++){
                     Lista<int>* camResto = new Lista<int>();
                     camResto= caminoPaq->copy();
-                    cout<<endl;
-                    cout<<endl;
                     Paquete* paquete = listaRecibida->cabeza();
-                    cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
+                    //cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
                     paquete->setNuevoCamino(camResto);
-                    paquete->getCamino()->impre();
-                    cout<<endl;
+                    //paquete->getCamino()->impre();
                     listaAEnviar->add(paquete);
                     listaRecibida = listaRecibida->resto();
                 }
@@ -1389,7 +1382,6 @@ int main(){
                 listaRecibida = listaVacia;
                 listaAEnviar = listaVacia;
                 cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
-                cout<<endl<<endl<<endl;
             }
             else i--;
         }
