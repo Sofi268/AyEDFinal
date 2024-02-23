@@ -500,7 +500,6 @@ private:
     Lista<int>* terminalesConLista;
     Lista<Paquete*>* listaAEnviar;
     Lista<Paquete*>* listaConCaminos;
-    Lista<Paquete*>* listaVacia;
     Lista<Paquete*>* paquetes;
 
 public:
@@ -584,7 +583,6 @@ Router::Router(int id, Lista<Paquete*>* paqs)
     listaAEnviar = new Lista<Paquete*>();
     listaConCaminos = new Lista<Paquete*>();
     paquetes = paqs;
-    listaVacia = new Lista<Paquete*>();
 }
 
 void Router::printVecinos(Lista<Router*>* vecis)
@@ -971,7 +969,7 @@ void Router::agregarPaquete(Paquete* paq)
 
 void Router::vaciarListaAEnviar(void)
 {
-    listaAEnviar = listaVacia;
+    vaciarLista(listaAEnviar);
 }
 
 void Router::vaciarLista(Lista<Paquete*>* listaABorrar)
@@ -1328,9 +1326,9 @@ int main(){
     Camino* camino = new Camino(matrizAdy, rout);
 
     // Creacion de paginas 
-    // int cantidadPaginas = posiblesPaginas(rd);
-    // cout<<"La cantidad de paginas es: "<<cantidadPaginas<<endl<<endl<<endl;
-    for(int i=0; i<10; i++){
+    int cantidadPaginas = posiblesPaginas(rd);
+    cout<<"La cantidad de paginas es: "<<cantidadPaginas<<endl<<endl<<endl;
+    for(int i=0; i<cantidadPaginas; i++){
         
         //Seleccion de maquina generadora aleatoria
         cout<<"Pasada numero: "<<i+1<<endl<<endl<<endl;
@@ -1361,6 +1359,7 @@ int main(){
                 int tam = posiblesTamanios(rd);
                 terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter(),numTerminalFinal,tam);
                 listaRecibida = routerO->getListaAEnviar();
+                cout<<"El tamanio de la lista recibida en el main es de: "<<listaRecibida->size()<<endl;
                 int tamanio = listaRecibida->size();
                 Paquete* paquete = listaRecibida->cabeza();
                 cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
@@ -1385,10 +1384,8 @@ int main(){
                     listaAEnviar->add(paquete);
                     listaRecibida = listaRecibida->resto();
                 }
-                cout<<"Hasta aca ok"<<endl;
                 routerO->recibirListaConCaminos(listaAEnviar);
                 routerO->vaciarListaAEnviar();
-                cout<<"Vuelve con exito"<<endl;
                 listaRecibida = listaVacia;
                 listaAEnviar = listaVacia;
                 cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
@@ -1400,6 +1397,7 @@ int main(){
     }
 
     cout<<"Inicio de los ciclos: "<<endl;
+
 
     //Se inician los ciclos 
     // Administrador* administrador= new Administrador(paquetes, rout,camino);
