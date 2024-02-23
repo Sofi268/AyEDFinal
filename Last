@@ -879,19 +879,20 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
 
 void Router::ciclo()
 {   
-    Cola<Paquete*>* colaAux;
+    Cola<Paquete*>* colaAux= new Cola<Paquete*>();
     Lista<Cola<Paquete*>*>* listaColasAux = colasTrafico;
-    int numeroDeColas = colasTrafico->size();
+    // int cantidadColasTrafico = colasTrafico->size();
+    // int numeroDeColas = colasTrafico->size();
     if(veciConColaTrafico->size()==0)return; //No tiene colas de Trafico
 
     //Recorre la Lista
-    for(int i = 0; i< numeroDeColas; i++){
+    for(int i = 0; i< colasTrafico->size(); i++){
+        cout<<endl;
+        if(colaAux->esVacia())break;
         colaAux = listaColasAux->cabeza();
-        cout<<"Hasta aca perfecto"<<endl;
         //Recorre la cola
         int anchoB = colaAux->getAnchoDeBanda();
         for(int j = 0; j<anchoB; j++){
-            cout<<"De diez"<<endl;
             Paquete* paquete = colaAux->tope();
             enviarPaqueteVecino(paquete);
             colaAux->desencolar();
@@ -899,7 +900,6 @@ void Router::ciclo()
 
             //Caso en que quede vacia la cola de Espera
             if(colaAux->esVacia()){
-                cout<<"Pase"<<endl;
                 int numRout = colaAux->getNumRout();
                 colasTrafico->borrarDato(colaAux);
                 veciConColaTrafico->borrarDato(numRout);
@@ -907,7 +907,6 @@ void Router::ciclo()
             }
         }
         listaColasAux = listaColasAux->resto();
-        cout<<"Ahora estoy aca"<<endl;
     }
 }
 
@@ -1435,15 +1434,17 @@ int main(){
 
         for(int j = 0; j<rout->size(); j++){
             Router* auxRout = routsAux->cabeza();
-            cout<<"Del Router numero: "<<auxRout->getID()<<endl;
+            cout<<"Ciclo del Router numero: "<<auxRout->getID()<<endl;
             cout<<"Cantidad de paquetes: "<<paquetes->size()<<endl;
             auxRout->ciclo();
             routsAux = routsAux->resto();
+            if(paquetes->esVacia()) break;
         }
+        if(paquetes->esVacia()) break;
         dosCiclos++;
     }
 
-    cout<<"Hello World";
+    cout<<"Finalizo la Simulacion Correctamente :) ";
      
     return EXIT_SUCCESS;
 }
