@@ -1265,7 +1265,7 @@ int main(){
             idCantTermi = routTentativo->getCantidadTerminales();//Obtencion de la cantidad de Maquinas asociada al routerAEnviar aleatorio obtenido
             if(idCantTermi <256 ){  //Comprobacion de la cantidad de maquinas es menor a la maxima Tentativo
                 numMaq = idCantTermi+1;
-                Terminal<Router*>* nuevaTerminal = new Terminal<Router*>(numMaq,numRout,routTentativo,i);//Creacion de la nueva maquina
+                Terminal<Router*>* nuevaTerminal = new Terminal<Router*>(numMaq,numRout,routTentativo,i+1);//Creacion de la nueva maquina
                 routTentativo->setNuevaTerminal(nuevaTerminal);//Asociacion de la maquina al routerAEnviar
                 terminales->add(nuevaTerminal);//Agregado de la maquina nueva a la lista de maquinas    
             }            
