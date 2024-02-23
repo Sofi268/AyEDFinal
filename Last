@@ -882,14 +882,16 @@ void Router::ciclo()
     Cola<Paquete*>* colaAux;
     Lista<Cola<Paquete*>*>* listaColasAux = colasTrafico;
     int numeroDeColas = colasTrafico->size();
+    if(veciConColaTrafico->size()==0)return; //No tiene colas de Trafico
 
     //Recorre la Lista
     for(int i = 0; i< numeroDeColas; i++){
         colaAux = listaColasAux->cabeza();
-
+        cout<<"Hasta aca perfecto"<<endl;
         //Recorre la cola
         int anchoB = colaAux->getAnchoDeBanda();
         for(int j = 0; j<anchoB; j++){
+            cout<<"De diez"<<endl;
             Paquete* paquete = colaAux->tope();
             enviarPaqueteVecino(paquete);
             colaAux->desencolar();
@@ -897,14 +899,15 @@ void Router::ciclo()
 
             //Caso en que quede vacia la cola de Espera
             if(colaAux->esVacia()){
+                cout<<"Pase"<<endl;
                 int numRout = colaAux->getNumRout();
                 colasTrafico->borrarDato(colaAux);
                 veciConColaTrafico->borrarDato(numRout);
                 break;
             }
         }
-
         listaColasAux = listaColasAux->resto();
+        cout<<"Ahora estoy aca"<<endl;
     }
 }
 
@@ -1125,7 +1128,7 @@ void Camino::setCamino(void)
     if (pdist[routFinal]!=INFI){
         cout<<endl;
         cout<<"Dijkstra: "<<endl;
-        cout<<"La distancia minima router " <<routOrigen<<" al router "<<routFinal<<" es = "<<pdist[routFinal];
+        cout<<"La distancia minima router " <<routOrigen<<" al router "<<routFinal<<" es = "<<pdist[routFinal]<<endl;
         camino(P,routOrigen ,routFinal); 
     }            
     else return; 
@@ -1243,10 +1246,11 @@ void Administrador::resetearCaminos()
     for(int i=0; i<cantidadDePaquetes; i++){
         Paquete* paquete = listaAux->cabeza();
         camino->setNuevoPaquete(paquete);
-        cout<<"Reseteo del paquete numero: "<<i<<" completado con exito"<<endl;
+        //cout<<"Reseteo del paquete numero: "<<i<<" completado con exito"<<endl;
         listaAux = listaAux->resto();
-        cout<<"Cantidad de paquetes: "<<listaPaquetes->size()<<endl;
+        //cout<<"Cantidad de paquetes: "<<listaPaquetes->size()<<endl;
     }
+    cout<<"Reseteo de los caminos de los paquetes exitoso"<<endl;
 }
 
 //----------------------------------------------------------Main-------------------------------------------------------------
