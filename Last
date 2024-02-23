@@ -359,6 +359,7 @@ public:
     int getSigRouter(void){return camino->cabeza();};
 
     //Setters
+    void setMaqTermi(int maqFi){ maqFinal = maqFi;};
     void setNuevoCaminoPrimario(Lista<int>* nuevoCamino);
     void setNuevoCamino(Lista<int>* nuevoCam){camino = nuevoCam;};
     void setRoutActual(int routerAct){routActual = routerAct;};
@@ -494,7 +495,7 @@ private:
     Lista<int>* veciConEspera;
     Lista<int>* veciConColaTrafico;
     Lista<int>* numVecinos;
-    static Lista<int>* terminalesConLista;
+    Lista<int>* terminalesConLista;
     Lista<Paquete*>* listaAEnviar;
     Lista<Paquete*>* listaConCaminos;
     Lista<Paquete*>* listaVacia;
@@ -577,11 +578,11 @@ Router::Router(int id, Lista<Paquete*>* paqs)
     veciConEspera = new Lista<int>();
     listasTerminales = new Lista<Lista<Lista<Paquete*>*>*>();
     numVecinos = new Lista<int>();
+    terminalesConLista = new Lista<int>();
     listaAEnviar = new Lista<Paquete*>();
     listaConCaminos = new Lista<Paquete*>();
     paquetes = paqs;
     listaVacia = new Lista<Paquete*>();
-    terminalesConLista = new Lista<int>();
 }
 
 void Router::printVecinos(Lista<Router*>* vecis)
@@ -633,9 +634,15 @@ Terminal<Router*>* Router::buscarTerminal(int IDTerminal, Lista<Terminal<Router*
 //Busca las listas de una Terminal
 Lista<Lista<Paquete*>*>* Router::buscarTerm(int IDTerminal, Lista<Lista<Lista<Paquete*>*>*>* terminales)
 {
+    //cout<<"Entro a buscarTerm"<<endl;
     Lista<Lista<Paquete*>*>* listaTermi = terminales->cabeza();
+    //cout<<"Estoy entre medio"<<endl;
     int numeroDeLaTerm = listaTermi->cabeza()->cabeza()->getMaquinaFinal();
-    if(numeroDeLaTerm== IDTerminal) return listaTermi;
+    cout<<"Paso hasta antes del if"<<endl;
+    if(numeroDeLaTerm== IDTerminal){
+        cout<<"Dentro del if"<<endl;
+        return listaTermi;
+    }
     else return buscarTerm(IDTerminal, terminales->resto());
 }
 
@@ -733,12 +740,6 @@ void Router::reconstruirPagina(Lista<Paquete*>* listaOrdenada)
     Paquete* paqAux = listaOrdenada->cabeza();
     Pagina* pagina = new Pagina(paqAux->getMaquinaOrigen(), paqAux->getRouterOrigen(), paqAux->getMaquinaFinal(),paqAux->getRouterFinal(),paqAux->getCantiTotalPaq(),paqAux->getNumPag(),paqAux->getIPorigen(), paqAux->getIPdestino(), paqAux->getMaquinaGnralOrigen(), paqAux->getMaquinaGnralFinal());
     enviarPagina(pagina);
-    int numMaquina = pagina->getNumMaqFinal();
-    Lista<Lista<Paquete*>*>* listaAux = buscarTerm(numMaquina, listasTerminales);
-    if(listaAux->esVacia()){
-
-    }
-    listaAux->borrarDato(listaOrdenada);
 }
 
 void Router::enviarPagina(Pagina* pagina)
@@ -771,6 +772,11 @@ void Router::recibirPaqueteFinal(Paquete* paquete)
         cout<<"Entro aca"<<endl;
         Lista<Paquete*>* listaOrd = new Lista<Paquete*>();
         listaOrdenada(listaMaquina,listaOrd);
+        cout<<"Llego hasta aca"<<endl;
+        Lista<Lista<Paquete*>*>* listaDeLaTerminal = buscarTerm(maqTerminal, listasTerminales);
+        cout<<"Paso por aqui"<<endl;
+        listaDeLaTerminal->borrarDeL(listaMaquina);
+        cout<<"Casi termino"<<endl;
         reconstruirPagina(listaOrd);
     }
     imprimirRecepcion(paquete, true);
@@ -787,7 +793,7 @@ Paquete* Router::buscarElemMenor(Lista<Paquete*>* listaTerminal)
 
     Paquete* paqueteMenor = listaAux->cabeza();
     while (listaAux->size()>1) {
-        cout<<"Todo bien hasta aca"<<endl;
+        //cout<<"Todo bien hasta aca"<<endl;
         Paquete* paqueteActual = listaAux->resto()->cabeza();
         if (paqueteActual->getOrdenPagina() < paqueteMenor->getOrdenPagina()) {
             paqueteMenor = paqueteActual;
@@ -799,18 +805,21 @@ Paquete* Router::buscarElemMenor(Lista<Paquete*>* listaTerminal)
 
 void Router::listaOrdenada(Lista<Paquete*>* listaTerminal, Lista<Paquete*>* listaOrdenada)
 {
-    cout<<"Tamanio original de listaTerminal: "<<listaTerminal->size()<<endl;
-    cout<<"Tamanio original de listaOrd: "<<listaOrdenada->size()<<endl;
+    // cout<<"Tamanio original de listaTerminal: "<<listaTerminal->size()<<endl;
+    // cout<<"Tamanio original de listaOrd: "<<listaOrdenada->size()<<endl;
     while (!listaTerminal->esVacia()) {
         Paquete* paquete = new Paquete();
         paquete = buscarElemMenor(listaTerminal);
-        cout<<"Primer paquete: "<<paquete->getOrdenPagina()<<endl;
+        //cout<<"Primer paquete: "<<paquete->getOrdenPagina()<<endl;
         listaOrdenada->add(paquete);
         listaTerminal->borrarDeL(paquete);
-        cout<<"Tamanio de lista Ordenada: "<<listaOrdenada->size()<<endl;
-        cout<<"Tamanio de listaTerminal: "<<listaTerminal->size()<<endl;
-        
+        // cout<<"Tamanio de lista Ordenada: "<<listaOrdenada->size()<<endl;
+        // cout<<"Tamanio de listaTerminal: "<<listaTerminal->size()<<endl;
     }
+    Paquete* paquete = new Paquete();
+    int numMaq = listaOrdenada->cabeza()->getMaquinaFinal();
+    paquete->setMaqTermi(numMaq);
+    listaTerminal->add(paquete);
     return;
 }
 
