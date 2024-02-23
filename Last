@@ -249,6 +249,7 @@ public:
     int getAnchoDeBanda(void){return anchoBanda;};
 
     //Setters
+    void setAnchoBanda(int aB){anchoBanda = aB;};
     void setCantiPaqMas(void){elemEnCola++;};
     void setCantiPaqMenos(void){elemEnCola--;};
 
@@ -819,6 +820,7 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
             colaEsp->encolar(paquete);
             colaEsp->setCantiPaqMas();
         }
+
         else{
             Cola<Paquete*>* colaTraf = buscarCola(siguienteRout, colasTrafico);
             colaTraf->encolar(paquete);
@@ -843,6 +845,10 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
 
             if(paquete->getNumPag()==ant){
                 int anchoBanda = buscarRouter(siguienteRout, vecinos)->getAnchoBanda();
+                if(anchoBanda == 0){
+                    cout<<"En parada 1"<<endl;
+                    system("PAUSE");
+                }
                 Cola<Paquete*>* colaEspera = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),1,anchoBanda);
                 colaEspera->encolar(paquete);
                 colaEspera->setCantiPaqMas();
@@ -857,6 +863,10 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
         }
         else{
             int anchoDeBanda = buscarRouter(siguienteRout,vecinos)->getAnchoBanda();
+            if(anchoBanda == 0){
+                    cout<<"En parada 2"<<endl;
+                    system("PAUSE");
+            }
             Cola<Paquete*>* colaTrafico = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),1, anchoDeBanda);
             colaTrafico->encolar(paquete);
             colaTrafico->setCantiPaqMas();
@@ -944,15 +954,32 @@ int Router::turno(int ID)
     if(!veciConColaTrafico->esta(ID)) return 2;
     else{
         Cola<Paquete*>* colaVecino = buscarCola(ID, colasTrafico);
+        Router* routVecino = buscarRouter(ID, vecinos);
+        int anchoDeBandaCola = routVecino->getAnchoBanda();
+
+        colaVecino->setAnchoBanda(anchoDeBandaCola);
         int anchoBanda = colaVecino->getAnchoDeBanda();
         int elemEnCola = colaVecino->getOrdenPagina();
         int ciclosEspera = 0;
         elemEnCola = elemEnCola - anchoBanda;
-        
+        int a = 5;
         while(elemEnCola>anchoBanda){
+            if(anchoDeBandaCola<1){
+                cout<<"El ancho de Banda es 0 "<<endl;
+                system("PAUSE");
+            }
+            cout<<"El ancho de Banda es: "<<anchoBanda<<endl;
+            cout<<"La cantidad de elementos de la cola es: "<<elemEnCola<<endl;
             ciclosEspera++;
             elemEnCola = elemEnCola - anchoBanda;
+            // cout<<"En el bucle"<<endl; 
+            // if(a==0){
+            //     cout<<"Freno el bucle en 5"<<endl;
+            //     system("PAUSE");
+            // }
+            // a = a - 1;
         }
+
         return ciclosEspera + 2;
     }
 }
@@ -1079,15 +1106,14 @@ void Camino::actualizarMatriz(void)
 {
     for(int i = 0; i<cantidadRouters; i++){ //i es el Router de Origen
         Router* routAux = buscarRouter(i, routers);
-        cout<<"Actualizacion de la fila del router numero: "<<i<<endl<<endl;
-        routAux->imprimirVecinos(routAux->getVecinos());
+        //routAux->imprimirVecinos(routAux->getVecinos());
         for(int j = 0; j<cantidadRouters; j++){ //j es el Router Destino
             if(matriz[i][j]!=INFI){ //Comprobar si son vecinos
-                cout<<"Columna del vecino: "<<j<<endl;
                 int numTurno = routAux->turno(j);
                 matriz[i][j] = numTurno;
             }
         }
+        cout<<"Actualizacion de la fila del router numero: "<<i<<" exitosa"<<endl<<endl;
     }
 }
 
@@ -1212,13 +1238,14 @@ void Administrador::resetearCaminos()
     cout<<"Cantidad de paquetes para resetear: "<<listaPaquetes->size()<<endl;
     listaAux = listaPaquetes;
     camino->actualizarMatriz();
+    int cantidadDePaquetes = listaPaquetes->size();
     cout<<"Actualizacion de Matriz exitosa"<<endl;
-    for(int i=0; listaPaquetes->size(); i++){
-        cout<<"Intento de setear el nuevo camino numero: "<<endl;
+    for(int i=0; i<cantidadDePaquetes; i++){
         Paquete* paquete = listaAux->cabeza();
         camino->setNuevoPaquete(paquete);
         cout<<"Reseteo del paquete numero: "<<i<<" completado con exito"<<endl;
         listaAux = listaAux->resto();
+        cout<<"Cantidad de paquetes: "<<listaPaquetes->size()<<endl;
     }
 }
 
@@ -1238,7 +1265,7 @@ int main(){
     uniform_int_distribution<int> posiblesTerminales(1, cantidadTerminales);
     uniform_int_distribution<int> posiblesPaginas(1,30);
     uniform_int_distribution<int> posiblesTamanios(1, 20);
-    uniform_int_distribution<int> posibleAnchoBanda(1,8);
+    uniform_int_distribution<int> posibleAnchoBanda(3,8);
     uniform_int_distribution<int> posiblesVecinos(1, maxVecinos);
 
     //Creacion de los routers
