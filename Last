@@ -494,7 +494,7 @@ private:
     Lista<int>* veciConEspera;
     Lista<int>* veciConColaTrafico;
     Lista<int>* numVecinos;
-    Lista<int>* terminalesConLista;
+    static Lista<int>* terminalesConLista;
     Lista<Paquete*>* listaAEnviar;
     Lista<Paquete*>* listaConCaminos;
     Lista<Paquete*>* listaVacia;
@@ -530,6 +530,7 @@ public:
     Lista<Paquete*>* buscarLista(int ID, Lista<Lista<Lista<Paquete*>*>*>* listasTerminales, int numeroPag);
     Lista<Lista<Paquete*>*>* buscarTerm(int IDTerminal, Lista<Lista<Lista<Paquete*>*>*>* terminales);
     Cola<Paquete*>* buscarCola(int ID, Lista<Cola<Paquete*>*>* colas);
+    Lista<Paquete*>* buscarListaPagina(Lista<Lista<Paquete*>*>* listaTerm, int numPag);
     
 
     //Recibir Pagina y crear Paquetes
@@ -547,7 +548,7 @@ public:
 
     //Recepcion de Paquetes y reenvio
     void recibirPaquete(Paquete* paquete); 
-    void recibirPaqueteVecino(Paquete* paquete); //Uso gestion de vecinos
+    void recibirPaqueteVecino(Paquete* paquete);
     void ciclo();
     bool pertenece(int numPag, int router);
     void enviarPaqueteVecino(Paquete* paquete);
@@ -622,49 +623,56 @@ Router* Router::buscarRouter(int IDRout, Lista<Router*>* vecinos)
 
 Terminal<Router*>* Router::buscarTerminal(int IDTerminal, Lista<Terminal<Router*>*>* terminales)
 {
-    if(terminalesConLista->esta(IDTerminal)){
-        if(terminales->esVacia()) return nullptr;
-        if(terminales->cabeza()->getNumeroTerminal() == IDTerminal){
-            return terminales->cabeza();
-        }
-        else return buscarTerminal(IDTerminal, terminales->resto());
-    }
-    else{
-        Terminal<Router*>* listaTerminal = new Terminal<Router*>();
-        terminalesConLista->add(IDTerminal);
-        terminales->add(listaTerminal);
-        return listaTerminal;
-
-    }
-}
-
-Lista<Lista<Paquete*>*>* Router::buscarTerm(int IDTerminal, Lista<Lista<Lista<Paquete*>*>*>* terminales)
-{
     if(terminales->esVacia()) return nullptr;
-    if(terminales->cabeza()->cabeza()->cabeza()->getMaquinaFinal() == IDTerminal){
+    if(terminales->cabeza()->getNumeroTerminal() == IDTerminal){
         return terminales->cabeza();
     }
+    else return buscarTerminal(IDTerminal, terminales->resto());
+}
+
+//Busca las listas de una Terminal
+Lista<Lista<Paquete*>*>* Router::buscarTerm(int IDTerminal, Lista<Lista<Lista<Paquete*>*>*>* terminales)
+{
+    Lista<Lista<Paquete*>*>* listaTermi = terminales->cabeza();
+    int numeroDeLaTerm = listaTermi->cabeza()->cabeza()->getMaquinaFinal();
+    if(numeroDeLaTerm== IDTerminal) return listaTermi;
     else return buscarTerm(IDTerminal, terminales->resto());
 }
 
+Lista<Paquete*>* Router::buscarListaPagina(Lista<Lista<Paquete*>*>* listaTerm, int numPag)
+{
+    if(listaTerm->esVacia()) return nullptr;
+    Lista<Paquete*>* listaPag = listaTerm->cabeza();
+    int numeroDeLaPag = listaPag->cabeza()->getNumPag();
+    if(numeroDeLaPag == numPag) return listaPag;
+    else return buscarListaPagina(listaTerm->resto(), numPag);
+}
+
+//Busca la lista de paquetes de una pagina
 Lista<Paquete*>* Router::buscarLista(int IDTerminal, Lista<Lista<Lista<Paquete*>*>*>* listasTerminales, int numeroPagina)
 {
-    if(listasTerminales->esVacia()) return nullptr;
-    Lista<Lista<Paquete*>*>* listaTerminalesAux = listasTerminales->cabeza(); 
-
-    if(listaTerminalesAux->cabeza()->cabeza()->getMaquinaFinal() == IDTerminal){
-        int cantidadPaginas = listaTerminalesAux->size();
-        for(int i=0; i<cantidadPaginas; i++){
-            Lista<Paquete*>* listaBuscada = listaTerminalesAux->cabeza();
-            if(listaBuscada->cabeza()->getNumPag()==numeroPagina){
-                return listaBuscada;
-            }
-            else listaTerminalesAux = listaTerminalesAux->resto(); //Pasa a la siguiente pagina
+    //Caso en que la terminal tiene listas de paginas incompletas
+    if(terminalesConLista->esta(IDTerminal)){
+        Lista<Lista<Paquete*>*>* listaTerm = buscarTerm(IDTerminal, listasTerminales);
+        Lista<Paquete*>* listaDePag = buscarListaPagina(listaTerm, numeroPagina);
+        if(listaDePag!=nullptr){
+            return listaDePag;
+        }
+        else{
+            Lista<Paquete*>* listaPagina = new Lista<Paquete*>();
+            listaTerm->add(listaPagina);
+            return listaPagina;
         }
     }
-    else return buscarLista(IDTerminal, listasTerminales->resto(), numeroPagina); //Pasa a la siguiente maquina
-    Lista<Paquete*>* nuevaLista =  new Lista<Paquete*>();
-    return nullptr; 
+    //Caso en que todavia la terminal no tiene lista de paginas incompletas
+    else{
+        Lista<Lista<Paquete*>*>* listaTermi = new Lista<Lista<Paquete*>*>();
+        Lista<Paquete*>* listaPagina = new Lista<Paquete*>();
+        listaTermi->add(listaPagina);
+        listasTerminales->add(listaTermi);
+        terminalesConLista->add(IDTerminal);
+        return listaPagina;
+    }
 }
 
 Cola<Paquete*>* Router::buscarCola(int IDRout, Lista<Cola<Paquete*>*>* colas)
@@ -712,11 +720,10 @@ void Router::recibirListaConCaminos(Lista<Paquete*>* listaCaminos)
 void Router::enviarDirecto(Paquete* paquete)
 {
     int sigRouter = paquete->getSigRouter();
-    paquete->getCamino()->impre();
-
-    cout<<"Router actual: "<<ID<<endl;
-    cout<<"El siguiente Router es: "<<sigRouter<<endl;
-    printVecinos(vecinos);
+    //paquete->getCamino()->impre();
+    //cout<<"Router actual: "<<ID<<endl;
+    //cout<<"El siguiente Router es: "<<sigRouter<<endl;
+    //printVecinos(vecinos);
     Router* routVeci = buscarRouter(sigRouter, vecinos);
     routVeci->recibirPaquete(paquete);
 }
@@ -728,13 +735,17 @@ void Router::reconstruirPagina(Lista<Paquete*>* listaOrdenada)
     enviarPagina(pagina);
     int numMaquina = pagina->getNumMaqFinal();
     Lista<Lista<Paquete*>*>* listaAux = buscarTerm(numMaquina, listasTerminales);
+    if(listaAux->esVacia()){
+
+    }
     listaAux->borrarDato(listaOrdenada);
 }
 
 void Router::enviarPagina(Pagina* pagina)
 {
     int maqDestino = pagina->getNumMaqFinal();
-    buscarTerminal(maqDestino, terminales)->recibirPagina(pagina);
+    Terminal<Router*>* terminalDestino = buscarTerminal(maqDestino, terminales);
+    terminalDestino->recibirPagina(pagina);
 }
 
 void Router::recibirPaquete(Paquete* paquete)
@@ -747,20 +758,14 @@ void Router::recibirPaquete(Paquete* paquete)
 
 void Router::recibirPaqueteFinal(Paquete* paquete)
 {
-    cout<<"Problema con recibir paquete Final"<<endl;
+    //cout<<"Problema con recibir paquete Final"<<endl;
     borrarPaquete(paquete);
     cout<<"El paquete numero "<< paquete->getOrdenPagina()<<" de la pagina "<<paquete->getNumPag()<<" sigue vivo "<<endl;
     int maqTerminal = paquete->getMaquinaFinal();
     int cantiTotalPaquetes = paquete->getCantiTotalPaq();
     int numPagina = paquete->getNumPag();
-    cout<<"Hasta antes de buscarLista todo ok"<<endl;
-    Lista<Paquete*>* listaMaquina = buscarLista(maqTerminal, listasTerminales,numPagina);
-    cout<<"Hasta despues de buscarLista todo ok"<<endl;
+    Lista<Paquete*>* listaMaquina = buscarLista(maqTerminal, listasTerminales, numPagina);
     listaMaquina->add(paquete);
-
-    if(listaMaquina==nullptr){
-
-    }
 
     if(listaMaquina->size()==cantiTotalPaquetes){
         cout<<"Entro aca"<<endl;
@@ -809,10 +814,9 @@ void Router::listaOrdenada(Lista<Paquete*>* listaTerminal, Lista<Paquete*>* list
     return;
 }
 
-
 void Router::recibirPaqueteVecino(Paquete* paquete)
 {
-    cout<<"Problema con recibir paquete Vecino"<<endl;
+    //cout<<"Problema con recibir paquete Vecino"<<endl;
     paquete->borrarElemCamino();
     int siguienteRout = paquete->getSigRouter();
     if(veciTieneEspera(siguienteRout)){//Si existe una cola de espera para el trafico del router
@@ -973,6 +977,7 @@ void Router::vaciarLista(Lista<Paquete*>* listaABorrar)
 {
     listaABorrar = listaVacia;
 }
+
 //----------------------------------------------------------Extra------------------------------------------------------------
 Router* buscarRouter(int numRout, Lista<Router*>* routers) 
 {
@@ -1232,7 +1237,7 @@ int main(){
     Lista<Router*>* rout = new Lista<Router*>(); //Lista de todos los routers creados
     Lista<Terminal<Router*>*>* terminales = new Lista<Terminal<Router*>*>(); //Lista de todas las maquinas creadas, independiente del routerAEnviar asociado
     Lista<Paquete*>* paquetes = new Lista<Paquete*>(); //Lista de todos los paquetes creados, independiente de la maquina creadora
-    int maxVecinos = 7;
+    int maxVecinos = 8;
     fill(*matrizAdy, *matrizAdy + cantidadRouters*cantidadRouters, INFI); //Inicializo la matriz de adyacencia con todos los nodos desconectados
     Lista<Paquete*>* listaAEnviar = new Lista<Paquete*>();
     Lista<Paquete*>* listaRecibida = new Lista<Paquete*>();
@@ -1319,9 +1324,9 @@ int main(){
     
     Camino* camino = new Camino(matrizAdy, rout);
 
-    //Creacion de paginas 
+    // Creacion de paginas 
     // int cantidadPaginas = posiblesPaginas(rd);
-    // cout<<"LA CANTIDAD DE PAGINAS ES: "<<cantidadPaginas<<endl<<endl<<endl;
+    // cout<<"La cantidad de paginas es: "<<cantidadPaginas<<endl<<endl<<endl;
     for(int i=0; i<2; i++){
         
         //Seleccion de maquina generadora aleatoria
@@ -1355,7 +1360,6 @@ int main(){
                 listaRecibida = routerO->getListaAEnviar();
                 int tamanio = listaRecibida->size();
                 Paquete* paquete = listaRecibida->cabeza();
-                cout<<"Tamanio de Lista recibida en Main: "<<tamanio<<endl;
                 cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
                 camino->setNuevoPaquete(paquete);
                 Lista<int>* caminoPaq = paquete->getCamino();
@@ -1364,14 +1368,14 @@ int main(){
                 listaAEnviar->add(paquete);
                 listaRecibida = listaRecibida->resto();
                 cout<<"Entrada al bucle de paquetes exitoso"<<endl;
-                cout<<"Camino del 1 paquete: "<<endl;
+                //cout<<"Camino del 1 paquete: "<<endl;
                 caminoPaq->impre();
                 for(int j = 1; j<tamanio; j++){
                     Lista<int>* camResto = new Lista<int>();
                     camResto= caminoPaq->copy();
                     cout<<endl;
-                    cout<<"Camino del "<<j + 1<<" paquete: "<<endl;
-                    camResto->impre();
+                    //cout<<"Camino del "<<j + 1<<" paquete: "<<endl;
+                    //camResto->impre();
                     cout<<endl;
                     Paquete* paquete = listaRecibida->cabeza();
                     cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
@@ -1382,8 +1386,6 @@ int main(){
                     listaRecibida= listaRecibida->resto();
                 }
 
-                cout<<"La lista a Enviar al router desde el main tiene un tamanio de: "<<listaAEnviar->size()<<endl;
-                
                 routerO->recibirListaConCaminos(listaAEnviar);
             
                 routerO->vaciarListaAEnviar();
@@ -1391,7 +1393,7 @@ int main(){
                 listaAEnviar = listaVacia;
                 cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
 
-                cout<<"Esta: "<<camino->getCamino()->esVacia()<<endl;
+                //cout<<"Esta: "<<camino->getCamino()->esVacia()<<endl;
                 cout<<endl<<endl<<endl;
             }
             else i--;
