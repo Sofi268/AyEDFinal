@@ -763,7 +763,11 @@ void Router::recibirPaqueteFinal(Paquete* paquete)
         Lista<Paquete*>* listaOrd = new Lista<Paquete*>();
         listaOrdenada(listaMaquina,listaOrd);
         Lista<Lista<Paquete*>*>* listaDeLaTerminal = buscarTerm(maqTerminal, listasTerminales);
-        listaDeLaTerminal->borrarDeL(listaMaquina);
+        listaDeLaTerminal->borrarDato(listaMaquina);
+        if(listaDeLaTerminal->esVacia()){
+            listasTerminales->borrarDato(listaDeLaTerminal);
+            terminalesConLista->borrarDato(maqTerminal);
+        }
         reconstruirPagina(listaOrd);
     }
     //imprimirRecepcion(paquete, true);
