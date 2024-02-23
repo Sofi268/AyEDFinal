@@ -168,28 +168,27 @@ template <class T> void Lista<T>::borrarD(T d, Nodo<T>* ant)
     }
 }
 
+
 template <class T> void Lista<T>::borrarCabezaLista(void)
-{ //borra el nodo cabeza
+{ 
     if (!this->esVacia()) {
         Nodo<T>* tmp = czo;
         czo = czo->getNext();
-        delete tmp;
     }
 }
-
 template <class T> void Lista<T>::borrarDeLista(T d, Nodo<T>* ant)
 {
     if (!this->esVacia()) {
         if (d == this->cabeza()) {
             if (ant == NULL) {//al principio
-                this->borrar();
+                this->borrarCabezaLista();
             }
             else {//entre medio
                 ant->setNext(czo->getNext());
-                delete czo;
             }
         }
         else  this->resto()->borrarD(d, czo);
+
     }
 }
 
@@ -229,6 +228,7 @@ template<class T> void Lista<T>::copiar(Lista<T>* listaACopiar)
     }
     copiar(listaACopiar->resto());
 }
+
 //------------------------------------------------- Cola Template-------------------------------------------------
 
 template <class T> class Cola :public Lista<T> {
@@ -709,15 +709,20 @@ void Router::recibirListaConCaminos(Lista<Paquete*>* listaCaminos)
     setListaConCaminos(listaCaminos);
     Lista<Paquete*>* listaAux = listaConCaminos;
     int tamLista = listaConCaminos->size();
-
+    cout<<"Tamanio de la lista con caminos original es: "<<tamLista<<endl;
     for(int i = 0; i<tamLista; i++){
         Paquete* paquete = listaAux->cabeza();
         paquetes->add(paquete);
         cout<<"Cantidad de paquetes: "<<paquetes->size()<<endl;
         enviarDirecto(paquete);
+        if(listaAux->resto()->esVacia())break;
         listaAux = listaAux->resto();
+        cout<<"Iteracion numero: "<<i<<endl;
+        cout<<"Ahora es: "<<tamLista<<endl;
+        
     }
     vaciarLista(listaConCaminos);
+    cout<<"La lista de caminos esta vacia: "<<listaConCaminos->esVacia()<<endl<<endl;
 }
 
 void Router::enviarDirecto(Paquete* paquete)
@@ -926,7 +931,9 @@ void Router::enviarPaqueteVecino(Paquete* paquete)
 }
 
 void Router::imprimirRecepcion(Paquete* paquete, bool final){
-    cout<<"Se recibio paquete de pagina numero: "<<paquete->getNumPag()<<endl;
+    cout<<endl<<endl;
+    cout<<"Se recibio paquete de pagina numero: "<<paquete->getOrdenPagina()<<endl;
+    cout<<"De la pagina numero: "<<paquete->getNumPag()<<endl;
     if(final)cout<<"Final: si"<<endl;
     else cout<<"Final: no"<<endl;
     cout<<"Router receptor: "<<ID<<endl;
@@ -969,7 +976,9 @@ void Router::vaciarListaAEnviar(void)
 
 void Router::vaciarLista(Lista<Paquete*>* listaABorrar)
 {
-    listaABorrar = listaVacia;
+    while(!listaABorrar->esVacia()){
+        listaABorrar->borrarCabezaLista();
+    }
 }
 
 //----------------------------------------------------------Extra------------------------------------------------------------
@@ -1321,7 +1330,7 @@ int main(){
     // Creacion de paginas 
     // int cantidadPaginas = posiblesPaginas(rd);
     // cout<<"La cantidad de paginas es: "<<cantidadPaginas<<endl<<endl<<endl;
-    for(int i=0; i<2; i++){
+    for(int i=0; i<10; i++){
         
         //Seleccion de maquina generadora aleatoria
         cout<<"Pasada numero: "<<i+1<<endl<<endl<<endl;
@@ -1374,12 +1383,12 @@ int main(){
                     paquete->getCamino()->impre();
                     cout<<endl;
                     listaAEnviar->add(paquete);
-                    listaRecibida= listaRecibida->resto();
+                    listaRecibida = listaRecibida->resto();
                 }
-
+                cout<<"Hasta aca ok"<<endl;
                 routerO->recibirListaConCaminos(listaAEnviar);
-            
                 routerO->vaciarListaAEnviar();
+                cout<<"Vuelve con exito"<<endl;
                 listaRecibida = listaVacia;
                 listaAEnviar = listaVacia;
                 cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
