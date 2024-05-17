@@ -149,19 +149,24 @@ Se nos proveyo el codigo de estas estructuras de datos para que sirvan como base
 ### Diagramas de Flujo para algunos Metodos: 
 
 Diagrama de Flujo de Router::recibirPaqueteVecino(Paquete* paquete):
+
  ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/e55ffb81-9d4c-48ae-ac3e-a22c13341cee)
 
 Diagrama de Flujo de Router::busquedaLista():
+
  ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/cce61b7f-f077-4b9b-ae82-9222efbe01a2)
 
 Diagrama de Flujo de Router::recibirPaqueteFinal(Paquete* paquete):
+
 ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/d11b9b6f-1bf5-4a0d-9e97-4cba0466793f)
 
 
 Diagrama de flujo de Camino::setNuevoPaquete():
+
 ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/395a9d16-6168-4fb1-af2e-ff4994754ca4)
 
 ## Diagrama de Secuencias
+
 ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/83ea1b10-ba1c-4794-87eb-67a7205f533d)
 
 
