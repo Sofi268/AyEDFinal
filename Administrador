@@ -1,3 +1,41 @@
-class Administrador{
 
+//----------------------------------------------------------Administrador-------------------------------------------------------
+class Administrador{
+private:
+    Lista<Paquete*>* listaPaquetes;
+    Lista<Paquete*>* listaAux;
+    Lista<Router*>* routers;
+    int matriz[cantidadRouters][cantidadRouters];
+    Camino* camino;
+    
+public: 
+    Administrador(void){};
+    Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,Camino* cam);
+    ~Administrador(void){};
+    
+    void resetearCaminos();
 };
+
+Administrador::Administrador(Lista<Paquete*>* paquetes, Lista<Router*>* routs,Camino* cam)
+{
+    listaPaquetes = paquetes;
+    routers = routs;
+    camino = cam;
+}
+
+void Administrador::resetearCaminos()
+{   
+    cout<<"Cantidad de paquetes para resetear: "<<listaPaquetes->size()<<endl;
+    listaAux = listaPaquetes;
+    camino->actualizarMatriz();
+    int cantidadDePaquetes = listaPaquetes->size();
+    cout<<"Actualizacion de Matriz exitosa"<<endl;
+    for(int i=0; i<cantidadDePaquetes; i++){
+        Paquete* paquete = listaAux->cabeza();
+        camino->setNuevoPaquete(paquete);
+        //cout<<"Reseteo del paquete numero: "<<i<<" completado con exito"<<endl;
+        listaAux = listaAux->resto();
+        //cout<<"Cantidad de paquetes: "<<listaPaquetes->size()<<endl;
+    }
+    cout<<"Reseteo de los caminos de los paquetes exitoso"<<endl;
+}
