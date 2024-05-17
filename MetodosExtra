@@ -1,0 +1,29 @@
+
+//----------------------------------------------------------Extra------------------------------------------------------------
+Router* buscarRouter(int numRout, Lista<Router*>* routers) 
+{
+    if(routers->esVacia()) return nullptr; 
+    if(routers->cabeza()->getID() == numRout){
+        return routers->cabeza();
+    }
+    else return buscarRouter(numRout, routers->resto());
+}
+
+Terminal<Router*>* buscarTerminal(int numTerminal, Lista<Terminal<Router*>*>* terminales)
+{
+    if (terminales->esVacia()) return nullptr;
+    if (terminales->cabeza()->getNumMaqGeneral() == numTerminal) {
+        return terminales->cabeza();
+    } 
+    else return buscarTerminal(numTerminal, terminales->resto());
+}
+
+void imprimirMatriz(void)
+{
+    for(int i = 0; i<cantidadRouters; i++){
+            for(int j = 0; j<cantidadRouters; j++){
+                cout<<matrizAdy[i][j]<<" ";
+            }
+            cout<<"\n";
+        }
+}
