@@ -1,8 +1,13 @@
+
+//----------------------------------------Pagina----------------------------------------------------------------
+
 class Pagina {
 private:
     int maqOrigen;
+    int maqGnralOrigen;
     int routOrigen;
     int maqFinal;
+    int maqGnralFinal;
     int routFinal;
     int tamanioPagina;
     int numeroPagina;
@@ -11,13 +16,15 @@ private:
 
 public:
     Pagina(void){};
-    Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD);
+    Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD,int numMaqGnralO, int numMaqGnralD);
     ~Pagina(void){};
 
     //Getters
     int getNumMaqOrigen(void){return maqOrigen;};
+    int getNumMaqGnralOrigen(void){return maqGnralOrigen;};
     int getRoutOrigen(){return routOrigen;};
     int getNumMaqFinal(void){return maqFinal;};
+    int getNumMaqGnralFinal(void){return maqGnralFinal;};
     int getRoutFinal(void){return routFinal;}
     int getTamanoPagina(void){return tamanioPagina;};
     int getNumeroPagina(void){return numeroPagina;};
@@ -27,11 +34,13 @@ public:
     void imprimirPagina();
 };
 
-Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal,  int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD)
+Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal,  int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD, int numMaqGnralO, int numMaqGnralD)
 {   
     maqOrigen = maquinaOrigen;
+    maqGnralOrigen = numMaqGnralO;
     routOrigen = routerOrigen;
     maqFinal = maquinaFinal;
+    maqGnralFinal = numMaqGnralD;
     routFinal = routerFinal;
     tamanioPagina = tamanio;
     numeroPagina = pagina;
@@ -42,9 +51,9 @@ Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int router
 void Pagina::imprimirPagina()
 {
     cout<<"Pagina numero "<<numeroPagina<<endl;
-    cout<<"Maquina Origen: "<<maqOrigen<<endl;
+    cout<<"Maquina Origen: "<<maqGnralOrigen<<endl;
     cout<<"Router Origen: "<<routOrigen<<endl;
-    cout<<"Maquina Destino: "<<maqFinal<<endl;
+    cout<<"Maquina Destino: "<<maqGnralFinal<<endl;
     cout<<"Router Destino: "<<routFinal<<endl;
     cout<<"Tamanio de la pagina: "<<tamanioPagina<<endl;
     cout<<"Direccion de Origen: "<<IPorigen<<endl;
