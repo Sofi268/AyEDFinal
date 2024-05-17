@@ -144,14 +144,20 @@ Se nos proveyo el codigo de estas estructuras de datos para que sirvan como base
 
 ### Diagrama de Clases:
 
+![Diagrama de Clases](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/833a0dbf-cd58-44d2-972f-9dfba0e80883)
+
 ### Diagramas de Flujo para algunos Metodos: 
 
-recibirPaqueteVecino():
+Diagrama de Flujo de Router::recibirPaqueteVecino(Paquete* paquete):
+ ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/e55ffb81-9d4c-48ae-ac3e-a22c13341cee)
 
-![image](https://github.com/Sofi268/AyEDFinal/assets/116833245/dcba6a17-33a0-4df1-b401-dbaa67c55444)
+Diagrama de Flujo de Router::busquedaLista():
+ ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/cce61b7f-f077-4b9b-ae82-9222efbe01a2)
 
-busquedaLista(): 
+Diagrama de Flujo de Router::recibirPaqueteFinal(Paquete* paquete):
+ ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/143398c5-2d4d-4e93-93b8-f9c315c60fdc)
 
-![image](https://github.com/Sofi268/AyEDFinal/assets/116833245/efe5a7ee-1e00-4a4d-a0b2-ffc306583dfb)
+Diagrama de flujo de Camino::setNuevoPaquete():
+![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/cfadb8ab-e288-477b-944c-2d1da448091b)
 
 
