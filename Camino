@@ -1,6 +1,8 @@
+
+//----------------------------------------------------------Camino---------------------------------------
 class Camino {
 private:
-    int matriz[5][5];
+    int matriz[cantidadRouters][cantidadRouters];
     Lista<Router*>* routers;
     Paquete* paquete;
     int routOrigen;
@@ -10,39 +12,36 @@ private:
 
 public:
     Camino(){};
-    Camino(int matrizAdy[5][5], Lista<Router*>* routs);
+    Camino(int matrizAdy[cantidadRouters][cantidadRouters], Lista<Router*>* routs);
     ~Camino(void){};
 
+    Lista<int>* getCamino(void){return cam;};
+
     void setNuevoPaquete(Paquete* paq);
-    void copiarMatriz(int matrizAdy[5][5]);
+    void copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters]);
     void actualizarMatriz(void);
-    int *dijkstra(int C[][5],int s, int t, int P[]);
+    int *dijkstra(int C[][cantidadRouters],int s, int t, int P[]);
     void camino(int P[], int s, int t);
     void guardarCamino(int t);
     void setCamino(void);
-
+    void resetCamino(void);
+    void imprimirMatrizAdy(void);
+    bool hayCamino(int routO, int routD);
 };
 
-Camino::Camino(int matrizAdy[5][5], Lista<Router*>* routs)
+Camino::Camino(int matrizAdy[cantidadRouters][cantidadRouters], Lista<Router*>* routs)
 {
     copiarMatriz(matrizAdy);
     routers = routs;
-    for(int i = 0; i<5; i++){
-        for(int j = 0; j<5; j++){
-            cout<<matriz[i][j]<<" ";
-        }
-        cout<<"\n";
-    }
 }
 
-void Camino::copiarMatriz(int matrizAdy[5][5])
+void Camino::copiarMatriz(int matrizAdy[cantidadRouters][cantidadRouters])
 {
-    for(int i =0; i<5; i++){
-        for(int j = 0; j<5; j++){
+    for(int i =0; i<cantidadRouters; i++){
+        for(int j = 0; j<cantidadRouters; j++){
             matriz[i][j] = matrizAdy[i][j];
         }
     }
-    
 }
 
 void Camino::setNuevoPaquete(Paquete* paq)
@@ -53,63 +52,68 @@ void Camino::setNuevoPaquete(Paquete* paq)
     //Primera vez que se setea el camino
     if(paquete->getCamino()->esVacia()){
         routOrigen = paquete->getRouterOrigen();
+        setCamino();
     }
 
     //Ya hay un camino y hay que modificarlo
     else{
         routOrigen = paquete->getSigRouter();
-    }
-    
-    if(routOrigen!=routFinal){
-        //actualizarMatriz();
-        setCamino();
-    }
 
-    else{
-        cam->add(routFinal);
+        if(routOrigen!=routFinal){
+            setCamino();
+        }
+        else return; //Si el siguiente Router del camino es su destino, no se modifica el camino
     }
 }
 
 void Camino::actualizarMatriz(void)
 {
-    for(int i =0; i<5; i++){
-        Router* routAux = buscarRouter(i+1, routers);
-        for(int j = 0; j<5; j++){
-            if(matriz[i][j]!=INFI){
-                int numTurno = routAux->turno(j+1);
-                numTurno = 2 + numTurno;
+    for(int i = 0; i<cantidadRouters; i++){ //i es el Router de Origen
+        Router* routAux = buscarRouter(i, routers);
+        //routAux->imprimirVecinos(routAux->getVecinos());
+        for(int j = 0; j<cantidadRouters; j++){ //j es el Router Destino
+            if(matriz[i][j]!=INFI){ //Comprobar si son vecinos
+                int numTurno = routAux->turno(j);
                 matriz[i][j] = numTurno;
             }
         }
+        cout<<"Actualizacion de la fila del router numero: "<<i<<" exitosa"<<endl<<endl;
     }
 }
 
 void Camino::setCamino(void)
 {
-    int *pdist, P[5];
-    pdist=dijkstra(matriz,routOrigen - 1,routFinal - 1,P);
+    int *pdist, P[cantidadRouters];
+    pdist=dijkstra(matriz,routOrigen,routFinal,P);
 
-    if (pdist[routFinal-1]!=INFI){
-        cout<<"El camino para el paquete es: "<<endl;
-        cout<<"\n\n distancia minima router " <<routOrigen<<" al router "<<routFinal<<" es= "<<pdist[routFinal-1];
-        cout<<"\n\n CAMINO= ";
-        camino(P,routOrigen - 1,routFinal - 1);
-    }                
-    else cout<<"\n NO HAY CAMINO";
-    
-    cout<<endl<<endl<<endl;
+    if (pdist[routFinal]!=INFI){
+        cout<<endl;
+        cout<<"Dijkstra: "<<endl;
+        cout<<"La distancia minima router " <<routOrigen<<" al router "<<routFinal<<" es = "<<pdist[routFinal]<<endl;
+        camino(P,routOrigen ,routFinal); 
+    }            
+    else return; 
+
     cam->borrar();
+    cam->borrar();
+    cam->addLast(routFinal);
     paquete->setNuevoCamino(cam);
-    paquete->getCamino()->impre();
+    resetCamino();
 }
 
-int* Camino::dijkstra(int C[][5],int s, int t, int Pre[])
+void Camino::resetCamino(void)
 {
-    static int D[5]; 
-    int S[5];
+    Lista<int>* caminoVacio = new Lista<int>();
+    cam = caminoVacio;
+}
+
+int* Camino::dijkstra(int C[][cantidadRouters],int s, int t, int Pre[])
+{
+    static int D[cantidadRouters]; 
+    int S[cantidadRouters];
     int actual, i, k, b;
     int menordist, nuevadist;
-    for(i=0;i<5;i++){
+    for(i=0;i<cantidadRouters;i++){
                             S[i]=NO_MIEMBRO;
                             D[i]=INFI;
                             Pre[i]= -1;
@@ -118,7 +122,7 @@ int* Camino::dijkstra(int C[][5],int s, int t, int Pre[])
     while((actual!=t)&&(b==1)){
                     b=0;
                     menordist=INFI;
-                    for(i=0;i<5;i++){          
+                    for(i=0;i<cantidadRouters;i++){          
                             if(S[i]==NO_MIEMBRO){
                                     nuevadist=D[actual]+C[actual][i];
                                     if(nuevadist<D[i]){
@@ -140,14 +144,31 @@ int* Camino::dijkstra(int C[][5],int s, int t, int Pre[])
 void Camino::camino(int P[], int s, int t)
 {  
     if (t==s){
-        int a = s+1;
+        int a = s;
         cam->addLast(a);
-        cout<< a<<"  ";
     }
    else{
         camino(P,s,P[t]);
-        int b = t + 1;
-        cout<<b<<"  ";
+        int b = t;
         cam->addLast(b);
    }
+}
+
+void Camino::imprimirMatrizAdy(void)
+{
+    for(int i=0; i<cantidadRouters; i++){
+        for(int j = 0; j<cantidadRouters; j++){
+            cout<<matrizAdy[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+}
+
+bool Camino::hayCamino(int routO, int routD)
+{
+    int *pdistancia, P[cantidadRouters];
+    pdistancia = dijkstra(matriz,routO,routD,P);
+
+    if (pdistancia[routD]!=INFI)return true;
+    else return false;
 }
