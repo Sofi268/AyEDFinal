@@ -155,9 +155,13 @@ Diagrama de Flujo de Router::busquedaLista():
  ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/cce61b7f-f077-4b9b-ae82-9222efbe01a2)
 
 Diagrama de Flujo de Router::recibirPaqueteFinal(Paquete* paquete):
- ![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/143398c5-2d4d-4e93-93b8-f9c315c60fdc)
+![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/d11b9b6f-1bf5-4a0d-9e97-4cba0466793f)
+
 
 Diagrama de flujo de Camino::setNuevoPaquete():
-![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/cfadb8ab-e288-477b-944c-2d1da448091b)
+![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/395a9d16-6168-4fb1-af2e-ff4994754ca4)
+
+## Diagrama de Secuencias
+![image](https://github.com/Sofi268/Simulacion-de-Trafico-de-Internet-C/assets/116833245/83ea1b10-ba1c-4794-87eb-67a7205f533d)
 
 
