@@ -1,3 +1,5 @@
+
+//-------------------------------------------Lista Template-------------------------------------------------------
 template <class T> class Nodo {
 private:
     T dato;
@@ -5,7 +7,7 @@ private:
 public:
     Nodo() { next = NULL; };
     Nodo(T a) { dato = a; next = NULL; };
-    void setDato(T a) { dato = a; };
+    void set_dato(T a) { dato = a; };
     void setNext(Nodo* n) { next = n; };
     T getDato() { return dato; };
     Nodo* getNext() { return next; };
@@ -15,17 +17,17 @@ public:
 template <class T> class Lista {
 private: Nodo<T>* czo;
        void borrarD(T d, Nodo<T>* ant);
+       void borrarDeLista(T d, Nodo<T>* ant);
 public:
     Lista() { czo = new Nodo<T>(); };
     Lista(Nodo<T>* n) { czo = n; };
-    //~Lista(void);
+    ~Lista(void){};
     void add(T d); //sumar nodos a la lista
     bool esVacia(void);
     T cabeza(void); //retorna el dato del primer nodo
     Lista* resto(void); //retorna el puntero al "resto" de la lista
-    T suma(T i);
-    void impre(void);
     int size();
+    void impre(void);
     bool esta(T d);// detecta si d esta en la lista
     void borrarDato(T d) { borrarD(d, NULL); }//borra el nodo que contiene d
     void borrar(void); //borra la cabeza
@@ -35,6 +37,9 @@ public:
     Lista<T>* copy(void);// hace una copia de la lista
     T last(); //retorna el dato del ultimo nodo
     void addLast(T d);
+    void copiar(Lista<T>*);
+    void borrarCabezaLista(void);
+    void borrarDeL(T d) { borrarDeLista(d,NULL); };
 };
 
 template <class T> void Lista<T>::add(T d) 
@@ -69,6 +74,16 @@ template <class T> int Lista<T>::size()
     return 1 + this->resto()->size();
 }
 
+template <class T> void Lista<T>::impre(void)
+{
+    Nodo<T>* aux;
+    aux = czo;
+    while (aux->getNext() != NULL) {
+        cout << aux->getDato() << endl;
+        aux = aux->getNext();
+    }
+}
+
 template <class T> void Lista<T>::borrar(void)
 { //borra el nodo cabeza
     if (!this->esVacia()) {
@@ -93,7 +108,8 @@ template <class T> void Lista<T>::concat(Lista<T>* l1)
 {// le transfiere los datos de l1 a this
     if (!(l1->esVacia())) {
         this->concat(l1->resto());
-        this->add(l1->cabeza());
+        T a = l1->cabeza();
+        this->add(a);
     }
 }
 
@@ -137,15 +153,28 @@ template <class T> void Lista<T>::borrarD(T d, Nodo<T>* ant)
     }
 }
 
-template <class T> void Lista<T>::impre(void)
-{
-    Nodo<T>* aux;
-    aux = czo->getNext();
-    while (aux->getNext() != NULL) {
-        cout << aux->getDato() << endl;
-        aux = aux->getNext();
+
+template <class T> void Lista<T>::borrarCabezaLista(void)
+{ 
+    if (!this->esVacia()) {
+        Nodo<T>* tmp = czo;
+        czo = czo->getNext();
     }
-    cout << aux->getDato() << endl;
+}
+template <class T> void Lista<T>::borrarDeLista(T d, Nodo<T>* ant)
+{
+    if (!this->esVacia()) {
+        if (d == this->cabeza()) {
+            if (ant == NULL) {//al principio
+                this->borrarCabezaLista();
+            }
+            else {//entre medio
+                ant->setNext(czo->getNext());
+            }
+        }
+        else  this->resto()->borrarD(d, czo);
+
+    }
 }
 
 template <class T> T Lista<T>::last()
@@ -171,4 +200,16 @@ template <class T> void Lista<T>::addLast(T d)
         }
         aux->setNext(nuevo); 
     }
+}
+
+template<class T> void Lista<T>::copiar(Lista<T>* listaACopiar)
+{
+    T dato = listaACopiar->cabeza();
+    this->addLast(dato);
+    if(listaACopiar->resto()->esVacia()) {
+        T dato = listaACopiar->cabeza();
+        this->addLast(dato);
+        return;
+    }
+    copiar(listaACopiar->resto());
 }
