@@ -662,6 +662,7 @@ Lista<Paquete*>* Router::buscarLista(int IDTerminal, Lista<Lista<Lista<Paquete*>
             return listaPagina;
         }
     }
+
     //Caso en que todavia la terminal no tiene lista de paginas incompletas
     else{
         Lista<Lista<Paquete*>*>* listaTermi = new Lista<Lista<Paquete*>*>();
@@ -704,18 +705,15 @@ void Router::recibirListaConCaminos(Lista<Paquete*>* listaCaminos)
     setListaConCaminos(listaCaminos);
     Lista<Paquete*>* listaAux = listaConCaminos;
     int tamLista = listaConCaminos->size();
-    //cout<<"Tamanio de la lista con caminos original es: "<<tamLista<<endl;
     for(int i = 0; i<tamLista; i++){
         Paquete* paquete = listaAux->cabeza();
         paquetes->add(paquete);
-        //cout<<"Cantidad de paquetes: "<<paquetes->size()<<endl;
         enviarDirecto(paquete);
         if(listaAux->resto()->esVacia())break;
         listaAux = listaAux->resto();
         
     }
     vaciarLista(listaConCaminos);
-    //cout<<"La lista de caminos esta vacia: "<<listaConCaminos->esVacia()<<endl<<endl;
 }
 
 void Router::enviarDirecto(Paquete* paquete)
@@ -750,7 +748,6 @@ void Router::recibirPaquete(Paquete* paquete)
 void Router::recibirPaqueteFinal(Paquete* paquete)
 {
     borrarPaquete(paquete);
-    //cout<<"El paquete numero "<< paquete->getOrdenPagina()<<" de la pagina "<<paquete->getNumPag()<<" sigue vivo "<<endl;
     int maqTerminal = paquete->getMaquinaFinal();
     int cantiTotalPaquetes = paquete->getCantiTotalPaq();
     int numPagina = paquete->getNumPag();
@@ -768,7 +765,6 @@ void Router::recibirPaqueteFinal(Paquete* paquete)
         }
         reconstruirPagina(listaOrd);
     }
-    //imprimirRecepcion(paquete, true);
 }
 
 Paquete* Router::buscarElemMenor(Lista<Paquete*>* listaTerminal)
@@ -843,10 +839,6 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
 
             if(paquete->getNumPag()==ant){
                 int anchoBanda = buscarRouter(siguienteRout, vecinos)->getAnchoBanda();
-                if(anchoBanda == 0){
-                    cout<<"En parada 1"<<endl;
-                    system("PAUSE");
-                }
                 Cola<Paquete*>* colaEspera = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),1,anchoBanda);
                 colaEspera->encolar(paquete);
                 cout<<"Paquete: "<<paquete->getOrdenPagina()<<"de la pagina: "<<paquete->getNumPag()<<" en cola de Router: "<<ID<<endl;
@@ -863,10 +855,6 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
         }
         else{
             int anchoDeBanda = buscarRouter(siguienteRout,vecinos)->getAnchoBanda();
-            if(anchoBanda == 0){
-                    cout<<"En parada 2"<<endl;
-                    system("PAUSE");
-            }
             Cola<Paquete*>* colaTrafico = new Cola<Paquete*>(siguienteRout,paquete->getNumPag(),1, anchoDeBanda);
             colaTrafico->encolar(paquete);
             cout<<"Paquete: "<<paquete->getOrdenPagina()<<"de la pagina: "<<paquete->getNumPag()<<" en cola de Router: "<<ID<<endl;
@@ -875,15 +863,12 @@ void Router::recibirPaqueteVecino(Paquete* paquete)
             veciConColaTrafico->add(siguienteRout);
         }
     }
-    //imprimirRecepcion(paquete, false);
 }
 
 void Router::ciclo()
 {   
     Cola<Paquete*>* colaAux= new Cola<Paquete*>();
     Lista<Cola<Paquete*>*>* listaColasAux = colasTrafico;
-    // int cantidadColasTrafico = colasTrafico->size();
-    // int numeroDeColas = colasTrafico->size();
     if(veciConColaTrafico->size()==0)return; //No tiene colas de Trafico
 
     //Recorre la Lista
@@ -967,17 +952,11 @@ int Router::turno(int ID)
         elemEnCola = elemEnCola - anchoBanda;
         int a = 5;
         while(elemEnCola>anchoBanda){
-            if(anchoDeBandaCola<1){
-                cout<<"El ancho de Banda es 0 "<<endl;
-                system("PAUSE");
-            }
             cout<<"El ancho de Banda es: "<<anchoBanda<<endl;
             cout<<"La cantidad de elementos de la cola es: "<<elemEnCola<<endl;
             ciclosEspera++;
             elemEnCola = elemEnCola - anchoBanda;
-
         }
-
         return ciclosEspera + 2;
     }
 }
