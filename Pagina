@@ -1,61 +1,64 @@
 
-//----------------------------------------Pagina----------------------------------------------------------------
+//-----------------------------------------------Paquete--------------------------------------------------
 
-class Pagina {
+class Paquete {
 private:
-    int maqOrigen;
-    int maqGnralOrigen;
-    int routOrigen;
-    int maqFinal;
-    int maqGnralFinal;
-    int routFinal;
-    int tamanioPagina;
-    int numeroPagina;
+    int maqOrigen, routOrigen, maqFinal, routFinal, routActual, tamanioPag, numeroPagina, numeroOrdenPagina, numeroOrdenCola, numMaqGnralO, numMaqGnralD;
+    Lista<int>* camino;
     bitset<16> IPorigen;
     bitset<16> IPdestino;
 
 public:
-    Pagina(void){};
-    Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routFinal, int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD,int numMaqGnralO, int numMaqGnralD);
-    ~Pagina(void){};
+    Paquete(void){};
+    Paquete(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal, int tamanioPagina, int numPagina, int numOrdenPagina, bitset<16> IPorig, bitset<16> IPdest, int numMaqGnralO, int numMaqGnralD);
+    ~Paquete(void){};
 
     //Getters
-    int getNumMaqOrigen(void){return maqOrigen;};
-    int getNumMaqGnralOrigen(void){return maqGnralOrigen;};
-    int getRoutOrigen(){return routOrigen;};
-    int getNumMaqFinal(void){return maqFinal;};
-    int getNumMaqGnralFinal(void){return maqGnralFinal;};
-    int getRoutFinal(void){return routFinal;}
-    int getTamanoPagina(void){return tamanioPagina;};
-    int getNumeroPagina(void){return numeroPagina;};
-    bitset<16> getIPorigen(void){return IPorigen;};
-    bitset<16> getIPdestino(void){return IPdestino;};
+    int getMaquinaOrigen(void){ return maqOrigen;};
+    int getMaquinaGnralOrigen(void){ return numMaqGnralO;};
+    int getRouterOrigen(void){return routOrigen;};
+    int getMaquinaFinal(void){return maqFinal;};
+    int getMaquinaGnralFinal(void){ return numMaqGnralD;};
+    int getRouterFinal(void){return routFinal;};
+    int getRoutActual(void){return routActual;};
+    int getCantiTotalPaq(void){return tamanioPag;};
+    int getNumPag(void){return numeroPagina;};
+    int getOrdenPagina(void){return numeroOrdenPagina;};
+    int getOrdenCola(void){return numeroOrdenCola;};
+    bitset <16> getIPorigen(void){return IPorigen;};
+    bitset <16> getIPdestino(void){return IPdestino;};
+    Lista<int>* getCamino(void){return camino;};
+    int getSigRouter(void){return camino->cabeza();};
 
-    void imprimirPagina();
+    //Setters
+    void setMaqTermi(int maqFi){ maqFinal = maqFi;};
+    void setNuevoCamino(Lista<int>* nuevoCam){camino = nuevoCam;};
+    void setRoutActual(int routerAct){routActual = routerAct;};
+    void setOrdenCola(int nuevoNum){numeroOrdenCola = nuevoNum;};
+
+    //Borra el primer elemento del camino
+    void borrarElemCamino(void);
+
 };
 
-Pagina::Pagina(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal,  int tamanio, int pagina, bitset<16> IpO, bitset<16> IpD, int numMaqGnralO, int numMaqGnralD)
-{   
+Paquete::Paquete(int maquinaOrigen, int routerOrigen, int maquinaFinal, int routerFinal, int tamanioPagina, int numPagina, int numOrdenPagina, bitset<16> IPorig, bitset<16> IPdest, int numMaqGnralO, int numMaqGnralD)
+{
     maqOrigen = maquinaOrigen;
-    maqGnralOrigen = numMaqGnralO;
     routOrigen = routerOrigen;
     maqFinal = maquinaFinal;
-    maqGnralFinal = numMaqGnralD;
     routFinal = routerFinal;
-    tamanioPagina = tamanio;
-    numeroPagina = pagina;
-    IPorigen = IpO;
-    IPdestino = IpD;
+    routActual = routerOrigen;
+    tamanioPag = tamanioPagina;
+    numeroPagina = numPagina;
+    numeroOrdenPagina = numOrdenPagina;
+    numeroOrdenCola = 0;
+    IPorigen = IPorig;
+    IPdestino = IPdest;
+    camino = new Lista<int>();
 }
 
-void Pagina::imprimirPagina()
-{
-    cout<<"Pagina numero "<<numeroPagina<<endl;
-    cout<<"Maquina Origen: "<<maqGnralOrigen<<endl;
-    cout<<"Router Origen: "<<routOrigen<<endl;
-    cout<<"Maquina Destino: "<<maqGnralFinal<<endl;
-    cout<<"Router Destino: "<<routFinal<<endl;
-    cout<<"Tamanio de la pagina: "<<tamanioPagina<<endl;
-    cout<<"Direccion de Origen: "<<IPorigen<<endl;
-    cout<<"Direccion de Destino: "<<IPdestino<<endl;
+void Paquete::borrarElemCamino(void)
+{   
+    int elementoABorrar = camino->cabeza();
+    camino->borrarDeL(elementoABorrar);
 }
