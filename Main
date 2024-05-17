@@ -1,0 +1,198 @@
+//----------------------------------------------------------Main-------------------------------------------------------------
+int main(){
+
+    Lista<Router*>* rout = new Lista<Router*>(); //Lista de todos los routers creados
+    Lista<Terminal<Router*>*>* terminales = new Lista<Terminal<Router*>*>(); //Lista de todas las maquinas creadas, independiente del routerAEnviar asociado
+    Lista<Paquete*>* paquetes = new Lista<Paquete*>(); //Lista de todos los paquetes creados, independiente de la maquina creadora
+    int maxVecinos = 2;
+    fill(*matrizAdy, *matrizAdy + cantidadRouters*cantidadRouters, INFI); //Inicializo la matriz de adyacencia con todos los nodos desconectados
+    Lista<Paquete*>* listaAEnviar = new Lista<Paquete*>();
+    Lista<Paquete*>* listaRecibida = new Lista<Paquete*>();
+    Lista<Paquete*>* listaVacia = new Lista<Paquete*>();
+    random_device rd;
+    uniform_int_distribution<int> posiblesRouters(0,cantidadRouters-1);
+    uniform_int_distribution<int> posiblesTerminales(1, cantidadTerminales);
+    uniform_int_distribution<int> posiblesPaginas(1,5);
+    uniform_int_distribution<int> posiblesTamanios(1, 20);
+    uniform_int_distribution<int> posibleAnchoBanda(3,8);
+    uniform_int_distribution<int> posiblesVecinos(1, maxVecinos);
+
+
+    //Creacion de los routers
+    for(int i = 0; i < cantidadRouters; i++){
+        Router* nuevoRout = new Router(i, paquetes);
+        rout->add(nuevoRout);
+        int ancho = posibleAnchoBanda(rd); //Recordar cambiarlo
+        nuevoRout->setAnchoBanda(ancho);
+    }
+
+    //Creacion de Terminales
+    for(int i = 0; i < cantidadTerminales; i++){
+        int numMaq, numRout;
+        int idCantTermi;
+        bool noApto = true;//Comprobacion que numero de maquinas del routerAEnviar elegido sea menor que el limite (256)
+        
+        //Bucle para seleccionar un routerAEnviar aleatorio apto, con cantidad de maquinas disponibles 
+        while(noApto){ 
+            numRout = posiblesRouters(rd); //Eleccion de Router Aleatorio
+            Router* routTentativo = buscarRouter(numRout, rout); 
+            idCantTermi = routTentativo->getCantidadTerminales();//Obtencion de la cantidad de Maquinas asociada al routerAEnviar aleatorio obtenido
+            if(idCantTermi <256 ){  //Comprobacion de la cantidad de maquinas es menor a la maxima Tentativo
+                numMaq = idCantTermi+1;
+                Terminal<Router*>* nuevaTerminal = new Terminal<Router*>(numMaq,numRout,routTentativo,i+1);//Creacion de la nueva maquina
+                routTentativo->setNuevaTerminal(nuevaTerminal);//Asociacion de la maquina al routerAEnviar
+                terminales->add(nuevaTerminal);//Agregado de la maquina nueva a la lista de maquinas    
+            }            
+            noApto = false;
+        }
+    }
+    
+    // Creacion de conexiones entre los Routers
+    // Dos bucles: el primero para elegir los routers vecinos y guardarlos, y el segundo para guardar en los vecinos ese routerAEnviar
+    Lista<Router*>* routAux = rout;
+    for(int i = 0; i < cantidadRouters; i++){ //i representa el numero del routerAEnviar al que se le esta designando los vecinos
+        Router* routActual = routAux->cabeza();
+        Router* routVecino;
+        int idActual = routActual->getID();
+        int idVecino;
+        int cantidadVecinosActual;
+        if(routActual->getVecinos()->esVacia()) cantidadVecinosActual = 0;
+        else cantidadVecinosActual = routActual->getNumVecinos()->size();;
+        
+        int cantVeciAleat = posiblesVecinos(rd);
+
+        if(cantVeciAleat>cantidadVecinosActual){
+            cantVeciAleat = cantVeciAleat - cantidadVecinosActual;
+
+            for(int j = 0; j<cantVeciAleat; j++){
+
+                int numRoutVeci = posiblesRouters(rd);
+                if(!routActual->getNumVecinos()->esta(numRoutVeci)){
+                    if(numRoutVeci!=routActual->getID()){
+                        routVecino = buscarRouter(numRoutVeci, rout); 
+                        int numVecino = routActual->getNumVecinos()->size();;
+                        
+                        if(numVecino<=maxVecinos){
+                            idVecino = routVecino->getID();
+
+                            routActual->setNuevoVecino(routVecino);
+                            routVecino->setNuevoVecino(routActual);
+                            
+                            matrizAdy[idActual][idVecino] = 1; //Actualizacion de la matriz de Adyacencia
+                            matrizAdy[idVecino][idActual] = 1;
+                        }
+                        else j--;
+                    }
+                }
+                else j--; //Caso en que el numero del routerAEnviar proutVecino sea su mismo numero de ID
+            }
+        }
+        routAux = routAux->resto(); //Movimiento hacia el siguiente routerAEnviar
+    }
+
+    //imprimirMatriz();
+    Camino* camino = new Camino(matrizAdy, rout);
+
+    // Creacion de paginas 
+    int cantidadPaginas = posiblesPaginas(rd);
+    cout<<"La cantidad de paginas es: "<<cantidadPaginas<<endl<<endl<<endl;
+    for(int i=0; i<cantidadPaginas; i++){
+        
+        //Seleccion de maquina generadora aleatoria
+        cout<<"Pasada numero: "<<i+1<<endl<<endl<<endl;
+        int numTerminalAleat = posiblesTerminales(rd);
+        cout<<"Terminal origen aleatoria de la pagina numero: "<<i<<" es: "<<numTerminalAleat<<endl<<endl;
+        Terminal<Router*>* terminalOrigenAleat = buscarTerminal(numTerminalAleat, terminales);
+        int numTerminalFinal = posiblesTerminales(rd);
+        cout<<"Terminal destino aleatoria de la pagina numero: "<<i<<" es: "<<numTerminalFinal<<endl<<endl;
+        if(numTerminalAleat == numTerminalFinal){
+            while(numTerminalAleat == numTerminalFinal){
+                numTerminalFinal = posiblesTerminales(rd);
+                cout<<"Terminal destino aleatoria segunda opcion de la pagina numero : "<<i<<" es: "<<numTerminalFinal<<endl<<endl;
+            }
+        }
+
+        Terminal<Router*>* terminalFinalAleat = buscarTerminal(numTerminalFinal, terminales);
+        
+        //Generacion de la pagina y envio
+        Router* routerO = terminalOrigenAleat->getRouterAsociado();
+        int routO = routerO->getID();
+        cout<<"Router origen aleatoria de la pagina numero : "<<i<<" es: "<<routO<<endl<<endl;
+        Router* routerD = terminalFinalAleat->getRouterAsociado();
+        int routD = routerD->getID();
+        cout<<"Router destino aleatoria de la pagina numero : "<<i<<" es: "<<routD<<endl<<endl;
+
+        if(routD!=routO){
+            if(camino->hayCamino(routO,routD)){
+                int tam = posiblesTamanios(rd);
+                terminalOrigenAleat->enviarPagina(rout, cantidadRouters, i, terminalFinalAleat->getNumeroTerminal(), terminalFinalAleat->getNumeroRouter(),numTerminalFinal,tam);
+                listaRecibida = routerO->getListaAEnviar();
+                //cout<<"El tamanio de la lista recibida en el main es de: "<<listaRecibida->size()<<endl;
+                int tamanio = listaRecibida->size();
+                Paquete* paquete = listaRecibida->cabeza();
+                //cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
+                camino->setNuevoPaquete(paquete);
+                Lista<int>* caminoPaq = paquete->getCamino();
+            
+                cout<<endl;
+                listaAEnviar->add(paquete);
+                listaRecibida = listaRecibida->resto();
+                //cout<<"Entrada al bucle de paquetes exitoso"<<endl;
+                caminoPaq->impre();
+                for(int j = 1; j<tamanio; j++){
+                    Lista<int>* camResto = new Lista<int>();
+                    camResto= caminoPaq->copy();
+                    Paquete* paquete = listaRecibida->cabeza();
+                    //cout<<"Paquete numero "<<paquete->getOrdenPagina()<<" de "<<paquete->getCantiTotalPaq()<<endl;
+                    paquete->setNuevoCamino(camResto);
+                    //paquete->getCamino()->impre();
+                    listaAEnviar->add(paquete);
+                    listaRecibida = listaRecibida->resto();
+                }
+                routerO->recibirListaConCaminos(listaAEnviar);
+                routerO->vaciarListaAEnviar();
+                listaRecibida = listaVacia;
+                listaAEnviar = listaVacia;
+                cout<<endl;
+                cout<<"Se enviaron correctamente los paquetes de la pagina numero: "<<i<<endl;
+            }
+            else i--;
+        }
+        else i--;
+    }
+
+    cout<<"Inicio de los ciclos: "<<endl;
+
+
+    //Se inician los ciclos 
+    Administrador* administrador= new Administrador(paquetes, rout,camino);
+    int ciclos = 10;
+    int dosCiclos = 0;
+    Lista<Router*>* routsAux = new Lista<Router*>();
+
+    for(int i = 0; i<ciclos; i++){
+        routsAux = rout;
+        cout<<"Ciclo numero: "<<i<<endl;
+
+        if(dosCiclos==2){
+            cout<<"Reseteo de Caminos"<<endl;
+            administrador->resetearCaminos();
+            dosCiclos = 0;
+        }
+
+        for(int j = 0; j<rout->size(); j++){
+            Router* auxRout = routsAux->cabeza();
+            cout<<"Ciclo del Router numero: "<<auxRout->getID()<<endl;
+            cout<<"Cantidad de paquetes: "<<paquetes->size()<<endl;
+            auxRout->ciclo();
+            routsAux = routsAux->resto();
+            if(paquetes->esVacia()) break;
+        }
+        if(paquetes->esVacia()) break;
+        dosCiclos++;
+    }
+
+    cout<<"Finalizo la Simulacion Correctamente :) ";
+     
+    return EXIT_SUCCESS;
+}
