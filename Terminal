@@ -1,40 +1,42 @@
+//---------------------------------------------------------Terminal--------------------------------------------------------------
 template <class T> class Terminal  {
 private:
-    int numMaquina;
+    int numTerminal;
     int numRouter;
     T routerAsociado;
-    bitset <16> direcMaquina;
+    bitset <16> direccionMaquina;
     Pagina* paginaEnviar;
     Lista<Pagina*>* paginasRecibidas;
+    int numMaqGnral;
+
 
 public:
     Terminal(void){};
-    Terminal(int numeroMaquina, int numeroROuter, T router);
+    Terminal(int numeroMaquina, int numeroRouter, T router, int numMaqGeneral);
 
     //Getters
-    int getNumeroMaq(void){return numMaquina;};
+    int getNumeroTerminal(void){return numTerminal;};
     int getNumeroRouter(void){return numRouter;};
     T getRouterAsociado(void){return routerAsociado;};
-    bitset<16> getDirecMaquina(void){return direcMaquina;};
+    bitset<16> getDirecMaquina(void){return direccionMaquina;};
+    int getNumMaqGeneral(void){return numMaqGnral;}
 
     bitset<16> setDireccion(int maq,  int rout);
 
-    Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag);
-    int generarTamanioAleatorio(void);
-    int generarDirecciondeEnvio(Lista<T>* rout, int cantidadRout);
-    int generarMaquina(int randRout, Lista<T>* rout);
-    void enviarPagina(Lista<T>* rout,int cantidadRout, int numPag);
+    Pagina* generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag, int numTerminalFinal, int numRoutFinal,int numMaqGnralFinal, int tamanio);
+    void enviarPagina(Lista<T>* rout,int cantidadRout, int numPag, int numMaqFinal, int numRoutFinal, int numMaqGnralFinal, int tamanio);
     void recibirPagina(Pagina* pag);
     void imprimirRecepcion(Pagina* pag);
 };
 
-template <class T> Terminal<T>::Terminal(int numeroMaquina, int numeroRouter, T router)
+template <class T> Terminal<T>::Terminal(int numeroMaquina, int numeroRouter, T router, int numMaqGeneral)
 {
-    numMaquina = numeroMaquina;
+    numTerminal = numeroMaquina;
     numRouter = numeroRouter;
     routerAsociado = router;
-    direcMaquina = setDireccion(numeroMaquina, numeroRouter);
+    direccionMaquina = setDireccion(numeroMaquina, numeroRouter);
     paginasRecibidas = new Lista<Pagina*>;
+    numMaqGnral = numMaqGeneral;
 }
 
 template<class T> bitset<16> Terminal<T>::setDireccion(int maq, int rout)
@@ -42,60 +44,27 @@ template<class T> bitset<16> Terminal<T>::setDireccion(int maq, int rout)
     bitset<16> a (maq);
     bitset<16> b (rout);
     (a<<=8);
-    direcMaquina = (a|b);
+    bitset<16> direcMaquina = (a|b);
     return direcMaquina;
 }
 
 //Generar Pagina a enviar
 
-template <class T> Pagina* Terminal<T>::generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag)
+template <class T> Pagina* Terminal<T>::generarPaginaAleatoria(Lista<T>* rout,int cantidadRout, int numPag, int numeroTerminalFinal, int numeroRoutFinal,int numMaqGnralFinal, int tamanio)
 {   
-    int tamanioPag = generarTamanioAleatorio();
-    int numMaqFinal, numRoutFinal = generarDirecciondeEnvio(rout, cantidadRout);
+    int tamanioPag = tamanio;
+    int numTerminalFinal = numeroTerminalFinal;
+    int numRoutFinal = numeroRoutFinal;
     int routOrigen = numRouter;
-    bitset<16> IPdest = setDireccion(numMaqFinal, numRoutFinal);
-    Pagina* nueva = new Pagina(numMaquina, routOrigen, numMaqFinal,numRoutFinal, tamanioPag, numPag, direcMaquina, IPdest);
+    bitset<16> IPdest = setDireccion(numTerminalFinal, numRoutFinal);
+    Pagina* nueva = new Pagina(numTerminal, routOrigen, numTerminalFinal,numRoutFinal, tamanioPag, numPag, direccionMaquina, IPdest, numMaqGnral, numMaqGnralFinal);
     return nueva;
 }
 
-template<class T> int Terminal<T>::generarTamanioAleatorio(void)
-{
-    //Eleccion de 60 como tamanio maximo aleatorio
-    srand(time(nullptr));
-    int tamanio = rand()% 60;
-    return tamanio;
-}
-
-//Generar direccion de envio aleatorio
-template<class T> int Terminal<T>::generarDirecciondeEnvio(Lista<T>* rout, int cantidadRout)
-{
-    int randMaq,randRout;
-    srand(time(nullptr));
-    randRout = rand()% cantidadRout;
-    randMaq = generarMaquina(randRout, rout);
-    if(randMaq ==0) generarDireccionesdeEnvio(rout, cantidadRout);
-    return randMaq,randRout;
-}
-
-//Busqueda del router a enviar elegido aleatoriamente 
-//Apartir de el, elige aleatoriamente una de sus maquinas aleatoria 
-template<class T> int Terminal<T>::generarMaquina(int randRout, Lista<T> *rout)
-{   
-    //Recorrido de lista de routers para encontrar el aleatorio
-    if(rout->cabeza().getIDRouter() == randRout){
-        srand(time(nullptr));
-        int randMaq = rand()%(rout->cabeza().getCantidadMaq()); 
-        return randMaq;
-    }
-
-    //Si no es, sigue recursivamente enviando el resto de la lista
-    else generarMaquina(randRout, rout->resto());
-}
-
 //Crear la pagina y luego enviarla al router asociado
-template<class T> void Terminal<T>::enviarPagina(Lista<T>* rout,int cantidadRout, int numPag)
+template<class T> void Terminal<T>::enviarPagina(Lista<T>* rout,int cantidadRout, int numPag, int numMaqFinal, int numRoutFinal,int numMaqGnralD, int tamanio)
 {
-    paginaEnviar = generarPaginaAleatoria(rout, cantidadRout, numPag);
+    paginaEnviar = generarPaginaAleatoria(rout, cantidadRout, numPag, numMaqFinal, numRoutFinal,numMaqGnralD, tamanio);
     routerAsociado->recibirPagina(paginaEnviar);
 }
 
@@ -108,7 +77,9 @@ template<class T> void Terminal<T>::recibirPagina(Pagina* pag)
 
 template<class T> void Terminal<T>::imprimirRecepcion(Pagina* pag)
 {
-    cout<<"La maquina "<<numMaquina<<" recibio exitosamente la pagina numero: "<<pag->getNumeroPagina()<<endl;
+    cout<<endl<<endl;
+    cout<<"La maquina "<<numTerminal<<" recibio exitosamente la pagina numero: "<<pag->getNumeroPagina()<<endl;
     cout<<"Direccion de envio: "<<pag->getIPorigen()<<endl;
     cout<<"Direccion de destino: "<<pag->getIPdestino()<<endl;
+    cout<<endl<<endl;
 }
